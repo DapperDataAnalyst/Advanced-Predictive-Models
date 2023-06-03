@@ -2,8 +2,8 @@ library(mvtnorm)
 library(ggplot2)
 
 n <- 30
-mu <- 5
-sig_sq <- 2
+mu <- 0
+sig_sq <- 5
 
 # First do independent model
 # Generate n independent and identically distributed normal random variables
@@ -41,7 +41,6 @@ ggplot(data = multivar_df, aes(x = Time, y = Random_Variables)) +
   geom_point() +
   labs(x = "Time", y = "Multivar Random Variables") +
   ggtitle("Time Series Plot of Random Variables with Points")
-
 
 
 
