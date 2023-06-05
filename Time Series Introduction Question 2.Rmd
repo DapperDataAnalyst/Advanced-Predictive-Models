@@ -18,8 +18,8 @@ tennisCourt = data.frame(x1 = c(0,4.5,18,31.5,36,0,4.5,4.5,0,-2),
 
 ggTennis = ggplot(tennisCourt) + 
   geom_segment(aes(x = x1,y = y1,xend = x2,yend = y2),size = tennisCourt$width) + 
-  labs(x = "A bad x-axis label",y = 'An easily replaceable y-axis label',
-       title = 'A Non-relevant Title')
+  labs(x = "Court Width",y = 'Court Depth',
+       title = 'Tennis Court')
 
 
 ```
@@ -34,12 +34,72 @@ ggTennis_with_ball_hits = ggTennis +
 
 ggTennis_with_ball_hits
 ```
+
 ## Part (b)
 ```{r }
 pmvnorm(lower = c(18,0), upper = c(31.5,21), mean = mu_vect, sigma = sigma)
 ```
 
-From this analysis, the theoretical probability of a legal serve is 0.8237.
+**Answer: From this analysis, the theoretical probability of a legal serve is 0.8237.**
 
+To approximate the probability, we will use the marginal distributions of the two random variables. We know that the marginal distribution of $X_1$ is $X_1 \sim N(\mu_1, \Sigma_{11}) = N(29, 4)$. Similarly, we know that the marginal distribution of $X_2$ is $X_2 \sim N(\mu_2, \Sigma_{22}) = N(16, 16)$.
+
+Using this information, we can find the density for $18 \leq X_1 \leq 31.5$ as follows:
+```{r}
+x1_marginal = pnorm(31.5, 29, sqrt(4)) - pnorm(18, 29, sqrt(4))
+x1_marginal
+```
+In the same way, we can find the density for $0 \leq X_2 \leq 21$ as follows:
+```{r}
+x2_marginal = pnorm(21, 16, sqrt(16)) - pnorm(0, 16, sqrt(16))
+x2_marginal
+```
+
+To approximate the probability of a serve landing in the two-dimensional region defined by both of these density intervals, we can multiply the probabilities as follows:
+```{r}
+x1_marginal * x2_marginal
+```
+
+**Answer: Thus we estimate the approximate probability of a legal serve as `r x1_marginal * x2_marginal`**
+
+## Part (c)
+```{r}
+x1 = 30.5
+
+mu_condit = mu_vect[2] + sigma[1,2]%*%solve(sigma[1,1])*(x1 - mu_vect[1])
+
+sigma_condit = sigma[2,2] - sigma[1,2]%*%solve(sigma[1,1])%*%sigma[2,1]
+```
+
+**Answer: Then the conditional distribution $X_2|X_1=30.5 \sim N($ `r mu_condit`, `r sigma_condit` $)$**
+
+Given that $X_1 = 30.5$, the probability that serves are legal is found as follows:
+```{r}
+condit_prob_legal = pnorm(21, mean = mu_condit, sd = sqrt(sigma_condit)) - pnorm(0, mean = mu_condit, sd = sqrt(sigma_condit))
+
+condit_prob_legal
+```
+**Answer: So the probability that a serve is legal given that $X_1 = 30.5$ is `r condit_prob_legal`**
+
+## Part (d)
+```{r}
+new_data = data.frame(rnorm(500, mean = mu_condit, sd = sqrt(sigma_condit)))
+
+colnames(new_data) = 'X2'
+
+new_ggTennis = ggTennis + 
+  geom_point(data = new_data,aes(x = 30.5, y = X2),
+             color = '#D55E00',
+             position = position_jitter(
+               width = 1,  # amount of jitter in horizontal direction
+               height = 0     # amount of jitter in vertical direction (0 = none)
+               ),
+             size = 0.5
+    )
+
+new_ggTennis
+```
+
+**Answer: The realizations of the conditional distribution form a normal curve in the $X_2$ direction, with all plotted points being on the vertical line $X_1 = 30.5$. The values generated from the conditional distribution are centered slightly higher than the original marginal distribution for $X_2$ (the conditional mean is 17.5, while the original marginal mean is 16). Additionally, the values in the conditional distribution are less spread out compared to the original marginal distribution for $X_2$ (the conditional variance is 12, while the original marginal variance is 16).**
 
 
