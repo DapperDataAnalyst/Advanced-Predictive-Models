@@ -1,0 +1,45 @@
+---
+title: "Time Series Introduction Question 2"
+output: html_document
+date: "2023-06-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(mvtnorm)
+
+#Creates a data.frame object, the easy structure to use for ggploting
+tennisCourt = data.frame(x1 = c(0,4.5,18,31.5,36,0,4.5,4.5,0,-2),
+                         x2 = c(0,4.5,18,31.5,36,36,31.5,31.5,36,38),
+                         y1 = c(-39,-39,-21,-39,-39,39,21,-21,-39,0), 
+                         y2 = c(39,39,21,39,39,39,21,-21,-39,0),
+                         width = c(rep(1,9),3))
+
+ggTennis = ggplot(tennisCourt) + 
+  geom_segment(aes(x = x1,y = y1,xend = x2,yend = y2),size = tennisCourt$width) + 
+  labs(x = "A bad x-axis label",y = 'An easily replaceable y-axis label',
+       title = 'A Non-relevant Title')
+
+
+```
+## Part (a)
+```{r }
+mu_vect = c(29, 16)
+sigma = matrix(c(4,4,4,16), nrow = 2, ncol = 2, byrow = TRUE)
+ball_data = data.frame(rmvnorm(5000, mu_vect, sigma))
+
+ggTennis_with_ball_hits = ggTennis + 
+  geom_point(data = ball_data,aes(x = X1, y = X2),color = 'firebrick')
+
+ggTennis_with_ball_hits
+```
+## Part (b)
+```{r }
+pmvnorm(lower = c(18,0), upper = c(31.5,21), mean = mu_vect, sigma = sigma)
+```
+
+From this analysis, the theoretical probability of a legal serve is 0.8237.
+
+
+
