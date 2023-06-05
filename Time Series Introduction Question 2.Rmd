@@ -43,25 +43,19 @@ pmvnorm(lower = c(18,0), upper = c(31.5,21), mean = mu_vect, sigma = sigma)
 
 **Answer: From this analysis, the theoretical probability of a legal serve is 0.8237.**
 
-To approximate the probability, we will use the marginal distributions of the two random variables. We know that the marginal distribution of $X_1$ is $X_1 \sim N(\mu_1, \Sigma_{11}) = N(29, 4)$. Similarly, we know that the marginal distribution of $X_2$ is $X_2 \sim N(\mu_2, \Sigma_{22}) = N(16, 16)$.
+To approximate the probability, we will run 5,000 realizations of the multivariate normal and count how many fall into the interval of interest where $18 \leq X_1 \leq 31.5$ and $0 \leq X_2 \leq 21$. We then divide this number by 5,000 to yield the percentage of realizations that fell within the intervals. This should be very close to our theoretical answer. We do this as follows:
 
-Using this information, we can find the density for $18 \leq X_1 \leq 31.5$ as follows:
 ```{r}
-x1_marginal = pnorm(31.5, 29, sqrt(4)) - pnorm(18, 29, sqrt(4))
-x1_marginal
-```
-In the same way, we can find the density for $0 \leq X_2 \leq 21$ as follows:
-```{r}
-x2_marginal = pnorm(21, 16, sqrt(16)) - pnorm(0, 16, sqrt(16))
-x2_marginal
-```
+data_in_interval = ball_data %>% 
+  filter(
+    between(ball_data$X1, 18, 31.5),
+    between(ball_data$X2, 0, 21)
+    )
 
-To approximate the probability of a serve landing in the two-dimensional region defined by both of these density intervals, we can multiply the probabilities as follows:
-```{r}
-x1_marginal * x2_marginal
+nrow(data_in_interval) / nrow(ball_data)
 ```
 
-**Answer: Thus we estimate the approximate probability of a legal serve as `r x1_marginal * x2_marginal`**
+**Answer: Thus, our approximation yields `r nrow(data_in_interval)` realizations in the interval bounds, which we divide by `r nrow(ball_data)` to yield an approximated probability of `r nrow(data_in_interval) / nrow(ball_data)`**
 
 ## Part (c)
 ```{r}
