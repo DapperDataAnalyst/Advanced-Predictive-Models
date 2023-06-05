@@ -8,6 +8,7 @@ date: "2023-06-09"
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(mvtnorm)
+library(tidyverse)
 
 #Creates a data.frame object, the easy structure to use for ggploting
 tennisCourt = data.frame(x1 = c(0,4.5,18,31.5,36,0,4.5,4.5,0,-2),
@@ -88,14 +89,16 @@ new_data = data.frame(rnorm(500, mean = mu_condit, sd = sqrt(sigma_condit)))
 colnames(new_data) = 'X2'
 
 new_ggTennis = ggTennis + 
+  geom_point(data = ball_data,aes(x = X1, y = X2),color = 'firebrick') +
   geom_point(data = new_data,aes(x = 30.5, y = X2),
-             color = '#D55E00',
+             color = '#56B4E9',
              position = position_jitter(
-               width = 1,  # amount of jitter in horizontal direction
+               width = 0.6,  # amount of jitter in horizontal direction
                height = 0     # amount of jitter in vertical direction (0 = none)
                ),
-             size = 0.5
+             size = 0.3
     )
+  
 
 new_ggTennis
 ```
