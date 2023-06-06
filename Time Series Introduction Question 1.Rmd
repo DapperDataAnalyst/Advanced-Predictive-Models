@@ -1,0 +1,84 @@
+---
+title: "Time Series Introduction Question 1"
+output: html_document
+date: "2023-06-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(gridExtra)
+```
+## Part (a)
+For a process to be stationary, its mean function must not vary with time, and its autocovariance function must be solely a function of the distances between time points.
+
+This sine wave with white noise process examined here is not stationary, as the white noise causes the mean and variance to vary over time.
+
+## Part (b)
+The signal-to-noise ratio of a process is the amplitude divided by the standard deviation of the noise. In this process, the amplitude is $10$, and the standard deviation of the noise is $\sqrt{1} = 1$. Thus, the signal-to-noise ratio is $10/1 = 10$.
+
+## Part (c)
+```{r}
+t = seq(from = 0, to = 120)
+x = 10*sin(t/5) + rnorm(121)
+df = data.frame(x = t, y = x)
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_line(color = '#0072B2') +
+  geom_point(color = '#0072B2') +
+  theme_bw() +
+  xlab('t') +
+  ylab('x')
+```
+
+## Part (d)
+```{r message=FALSE, warning=FALSE}
+x_noisier = 10*sin(t/5) + rnorm(121, mean = 0, sd = sqrt(16))
+df_noisier = data.frame(x = t, y = x_noisier)
+
+ggLowNoise = ggplot(df, aes(x = x, y = y)) +
+  geom_line(color = '#0072B2') +
+  geom_point(color = '#0072B2') +
+  theme_bw() +
+  xlab('t') +
+  ylab('x') +
+  scale_y_continuous(limits = c(-15,15))
+
+ggHighNoise = ggplot(df_noisier, aes(x = x, y = y)) +
+  geom_line(color = '#E69F00') +
+  geom_point(color = '#E69F00') +
+  theme_bw() +
+  xlab('t') +
+  ylab('x_noisier') +
+  scale_y_continuous(limits = c(-15,15))
+
+grid.arrange(ggLowNoise, ggHighNoise, nrow = 1)
+```
+
+The aplitude of the noisier plot is still $10$, but now the standard deviation of the noise is $\sqrt{16} = 4$. Thus, the signal-to-noise ratio of the noiser process is $10/4 = 5/2$.
+
+## Part (e)
+The periods of the two processes are identical; the change in the variance of the white noise does not affect period. Both processes have period $10 \pi = 31.42$.
+
+The signal-to-noise ratio of the original process is 10, since it has an amplitude of 10 and a noise standard deviation of 1. The signal-to-noise ratio of the noisier process is 5/2, since it has amplitude of 10 and noise standard deviation of 4. These two signal-to-noise ratios differ solely because of the higher noise standard deviation of the noisier process.
+
+For the original process, the observed value at $t=45$ is `r df[46,2]`. For the noisier process, the observed value at $t=45$ `r df_noisier[46,2]`. The difference between these two values is due to the stochasticity introduced by the noise components. The mean of the original process is identical to that of the noisier process, as the white noise random variable has an expected value of zero, and thus does not change the expected value of the signal function. The following code finds the expected value of both processes:
+
+```{r message=FALSE, warning=FALSE}
+library(pracma)
+
+# Define the function to integrate
+f = function(t) {
+  10 * sin(t / 5)
+}
+
+# Calculate the expected value
+a = 0
+b = 120
+expected_value = (1 / (b - a)) * integral(f, a, b)
+
+# Print the expected value
+print(expected_value)
+
+```
+Both processes have expected value `r expected_value`.
