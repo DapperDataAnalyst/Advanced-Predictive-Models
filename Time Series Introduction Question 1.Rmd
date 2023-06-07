@@ -55,7 +55,7 @@ ggHighNoise = ggplot(df_noisier, aes(x = x, y = y)) +
 grid.arrange(ggLowNoise, ggHighNoise, nrow = 1)
 ```
 
-The aplitude of the noisier plot is still $10$, but now the standard deviation of the noise is $\sqrt{16} = 4$. Thus, the signal-to-noise ratio of the noiser process is $10/4 = 5/2$.
+The amplitude of the noisier plot is still $10$, but now the standard deviation of the noise is $\sqrt{16} = 4$. Thus, the signal-to-noise ratio of the nosier process is $10/4 = 5/2$.
 
 ## Part (e)
 The periods of the two processes are identical; the change in the variance of the white noise does not affect period. Both processes have period $10 \pi = 31.42$.
