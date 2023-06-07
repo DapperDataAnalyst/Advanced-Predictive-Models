@@ -62,23 +62,9 @@ The periods of the two processes are identical; the change in the variance of th
 
 The signal-to-noise ratio of the original process is 10, since it has an amplitude of 10 and a noise standard deviation of 1. The signal-to-noise ratio of the noisier process is 5/2, since it has amplitude of 10 and noise standard deviation of 4. These two signal-to-noise ratios differ solely because of the higher noise standard deviation of the noisier process.
 
-For the original process, the observed value at $t=45$ is `r df[46,2]`. For the noisier process, the observed value at $t=45$ `r df_noisier[46,2]`. The difference between these two values is due to the stochasticity introduced by the noise components. The mean of the original process is identical to that of the noisier process, as the white noise random variable has an expected value of zero, and thus does not change the expected value of the signal function. The following code finds the expected value of both processes:
+For the original process, the observed value at $t=45$ is `r df[46,2]`. For the noisier process, the observed value at $t=45$ `r df_noisier[46,2]`. The difference between these two values is due to the stochasticity introduced by the noise components. The mean of the original process at $t=45$ is identical to that of the noisier process, as the white noise random variable has an expected value of zero, and thus does not change the expected value of the signal function. The expected value of both processes at $t=45$ is simply the signal component of the model at this time point, and is found as follows:
 
 ```{r message=FALSE, warning=FALSE}
-library(pracma)
-
-# Define the function to integrate
-f = function(t) {
-  10 * sin(t / 5)
-}
-
-# Calculate the expected value
-a = 0
-b = 120
-expected_value = (1 / (b - a)) * integral(f, a, b)
-
-# Print the expected value
-print(expected_value)
-
+10*sin(t/5)[46]
 ```
-Both processes have expected value `r expected_value`.
+Both processes have expected value `r 10*sin(t/5)[46]`.
