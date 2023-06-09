@@ -12,7 +12,7 @@ library(gridExtra)
 ## Part (a)
 For a process to be stationary, its mean function must not vary with time, and its autocovariance function must be solely a function of the distances between time points.
 
-This sine wave with white noise process examined here is not stationary, as the white noise causes the mean and variance to vary over time.
+This sine wave with white noise process examined here is not stationary. The mean of the sine wave is not constant over time, because of the cyclical nature of the signal function. The autocovariance function $\gamma_X(s,t) = cov(X_s,X_t) = E[(X_s - \mu_s)(X_t - \mu_t)]$ is zero in expectation.
 
 ## Part (b)
 The signal-to-noise ratio of a process is the amplitude divided by the standard deviation of the noise. In this process, the amplitude is $10$, and the standard deviation of the noise is $\sqrt{1} = 1$. Thus, the signal-to-noise ratio is $10/1 = 10$.
