@@ -127,8 +127,8 @@ gg_fit <- ggplot(fit_data,
   geom_line(aes(y = x, col = Type)) +
   geom_ribbon(data = fit_pred_data,
               aes(x = Time, 
-                  ymin = x - 2*SE,
-                  ymax = x + 2*SE),
+                  ymin = x - 1.96*SE,
+                  ymax = x + 1.96*SE),
               alpha = .2) +
   geom_vline(xintercept = n_train)
 
