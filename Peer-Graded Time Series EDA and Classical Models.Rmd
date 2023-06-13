@@ -1,5 +1,5 @@
 ---
-title: "Time Series EDA and Classical Models"
+title: "Peer-Graded Time Series EDA and Classical Models"
 output: html_document
 date: "2023-06-16"
 ---
