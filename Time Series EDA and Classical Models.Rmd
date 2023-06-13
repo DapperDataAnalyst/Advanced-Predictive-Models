@@ -147,7 +147,7 @@ The quality of the predictions degrades rather rapidly. Around time point 200, t
 The top plot, with more erratic data, corresponds to $a_1$, while the bottom plot corresponds to $a_2$. The two plots differ in smoothness because of how many points each filter takes into consideration. Filter $a_1$ considers only eight points to determine its average. Thus, it is rather susceptible to large jumps in the value of the data. Filter $a_2$ considers 31 points to determine its average, and thus each point contributes far less to the average value than in $a_1$. This makes $a_2$ respond comparatively little to changes in the underlying data values.
 
 ### Part (b)
-```{r}
+```{r message=FALSE, warning=FALSE}
 #accidents$Date <- as.Date(accidents$Date)
 a3_weights <- c(1,0,0,0,0,0,0,1,0,0,0,0,0,0,1)/3
 a4_weights <- c(1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1)/7
@@ -166,15 +166,15 @@ a4_smoothed_data <- accidents %>%
 
 ggplot() +
   geom_point(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), size = 0.3) +
-  geom_line(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), size = 0.3) +
-  geom_line(data = a3_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek), size = 1) +
+  geom_line(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), linewidth = 0.3) +
+  geom_line(data = a3_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek), linewidth = 1) +
   theme_bw() +
   labs(title = 'Original Plot as Given in Homework')
 
 ggplot() +
   geom_point(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), size = 0.3) +
-  geom_line(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), size = 0.3) +
-  geom_line(data = a4_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek), size = 1) +
+  geom_line(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), linewidth = 0.3) +
+  geom_line(data = a4_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek), linewidth = 1) +
   theme_bw() +
   labs(title = 'New Plot Using Filter a4')
 
