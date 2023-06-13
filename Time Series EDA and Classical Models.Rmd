@@ -165,14 +165,14 @@ a4_smoothed_data <- accidents %>%
   na.omit
 
 ggplot() +
-  geom_point(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), size = 0.3) +
+  geom_point(data = accidents, aes(x = Date, y = Freq), size = 0.3, color = 'black') +
   geom_line(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), linewidth = 0.3) +
   geom_line(data = a3_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek), linewidth = 1) +
   theme_bw() +
   labs(title = 'Original Plot as Given in Homework')
 
 ggplot() +
-  geom_point(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), size = 0.3) +
+  geom_point(data = accidents, aes(x = Date, y = Freq), size = 0.3, color = 'black') +
   geom_line(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), linewidth = 0.3) +
   geom_line(data = a4_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek), linewidth = 1) +
   theme_bw() +
