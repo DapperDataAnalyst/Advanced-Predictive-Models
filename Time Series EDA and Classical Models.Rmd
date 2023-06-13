@@ -17,6 +17,8 @@ ARMAdata1 <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalys
 
 ARMAdata2 <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/ARMAData2.csv')
 
+accidents <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/TexasAccidents.csv')
+
 ```
 
 ## Question 1
@@ -46,7 +48,7 @@ fit_objects
 
 
 ```
-From this analysis, ARMA(p=3, q=1) yields the lowest AICc value, and thus the best.
+From this analysis, ARMA(p=3, q=1) yields the lowest AICc value, and is thus the best.
 
 
 ### Part (b)
@@ -85,16 +87,61 @@ The resulting AICc value is `r fit$AICc`
 
 ### Part (d)
 ```{r}
+n <- nrow(ARMAdata2)
+fit_train <- sarima(ARMAdata2_train$x,
+              p = 2, 
+              d = 0, 
+              q = 2, 
+              no.constant = TRUE,
+              details = FALSE)
+
 fit_for <- sarima.for(ARMAdata2_train$x, 
-                      n.ahead = nrow(ARMAdata2) - n_train, 
+                      n.ahead = n - n_train, 
                       p = 2, 
                       d = 0, 
                       q = 2,
                       plot = F)
 
+fit_data <- bind_rows(
+  data.frame(Time = 1:n,
+             Type = factor(rep("Given Data", n),
+                              levels = c("Given Data",
+                                         "Pred")),
+             x = as.numeric(ARMAdata2$x)),
+  data.frame(Time = 1:n,
+             Type = factor(rep("Pred", n),
+                              levels = c("Given Data",
+                                         "Pred")),
+             x = c(as.numeric(ARMAdata2_train$x) - 
+                     as.numeric(resid(fit_train$fit)), 
+                   as.numeric(fit_for$pred))))
 
+fit_pred_data <- data.frame(Time = 1:nrow(ARMAdata2),
+                          x = c(as.numeric(ARMAdata2_train$x) - as.numeric(resid(fit_train$fit)), 
+                                  as.numeric(fit_for$pred)),
+                          SE = c(rep(sqrt(fit_train$fit$sigma2), n_train), as.numeric(fit_for$se)))
 
+gg_fit <- ggplot(fit_data,
+                 aes(x = Time)) +
+  geom_line(aes(y = x, col = Type)) +
+  geom_ribbon(data = fit_pred_data,
+              aes(x = Time, 
+                  ymin = x - 2*SE,
+                  ymax = x + 2*SE),
+              alpha = .2) +
+  geom_vline(xintercept = n_train)
 
+gg_fit
 
 
 ```
+The predicted values after time point 150 follow the general shape of the true data; the prediction line rises and falls in tandem with the true data. However, the predicted values do not capture the magnitude of the true data, as the Given Data line rises to much greater heights and falls to much lower depths than the prediction ever does.
+
+The quality of the predictions degrades rather rapidly. Around time point 200, the prediction has almost entirely reverted to the mean, becoming an almost horizontal line.
+
+
+## Question 2
+### Part (a)
+
+
+
