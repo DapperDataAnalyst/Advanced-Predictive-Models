@@ -33,11 +33,18 @@ arg_names <- c('p','d','q','P','D','Q')
 arg_count <- length(arg_names)
 l <- rep(list(0:1), arg_count)
 
+# Make data frame containing all combinations of the parameters
 combo_frame <- data.frame(expand.grid(l))
+
+# Clean up column names
 colnames(combo_frame) <- arg_names
+
+# Remove rows as instructed in homework document
 rows_to_remove <- combo_frame[combo_frame$P==1 & combo_frame$D==0 & combo_frame$Q==1 & combo_frame$d==0,]
 combo_frame <- combo_frame %>% anti_join(rows_to_remove)
 
+
+# Make custom function to run SARIMA on all parameter combos
 mass_sarima <- function(vect){
  fit <- sarima(temps$AvgTemp,
   p = vect[1],
@@ -52,20 +59,75 @@ mass_sarima <- function(vect){
  return(fit$AICc)
 }
 
+# Bind AICc outputs to combo_frame
 combo_frame <- cbind(combo_frame,apply(combo_frame, MARGIN = 1, mass_sarima))
-names(combo_frame)[7] <- 'AICc'
-best_AICc <- min(combo_frame[,7])
 
+# Clean up column name
+names(combo_frame)[7] <- 'AICc'
+
+# Find lowest AICc and return the parameter set that generates it
+best_AICc <- min(combo_frame[,7])
 best_parameters <- combo_frame[which.min(combo_frame$AICc),]
 best_parameters
-
 
 ```
 
 From this analysis, we find that the minimum AICc value is `r best_parameters[,'AICc']`. This value is found at parameter values p=`r best_parameters[,'p']`, d=`r best_parameters[,'d']`, q=`r best_parameters[,'q']`, P=`r best_parameters[,'P']`, D=`r best_parameters[,'D']`, Q=`r best_parameters[,'Q']`.
 
 ### Part (c)
+```{r 3Qc}
 
+# Define ideal parameters from Part (b)
+p <- best_parameters[,'p']
+d <- best_parameters[,'d']
+q <- best_parameters[,'q']
+P <- best_parameters[,'P']
+D <- best_parameters[,'D']
+Q <- best_parameters[,'Q']
+forecasted_temps <- data.frame()
+
+
+# Find row of Jan 2015
+last_real_row <- which(temps$Month == '2015-01-01')
+
+
+for (i in 1:(nrow(temps) - last_real_row - 11)) {
+  
+  
+  # Slice temps data to only include training data
+  temp_train <- temps[1:last_real_row,]
+  
+  # Run SARIMA forecast
+  forecast_model <- sarima.for(temp_train$AvgTemp, 
+                        n.ahead = S, 
+                        p = p, 
+                        d = d, 
+                        q = q,
+                        P = P,
+                        D = D,
+                        Q = Q,
+                        S = S,
+                        plot = F)
+  
+  # Collect forecast for one year from now and add to forecasted_temps
+  next_year_forecast <- forecast_model$pred[12]
+  forecast_row <- c(as.character(temps$Month[last_real_row+12]), as.numeric(next_year_forecast))
+  forecasted_temps <- rbind(forecasted_temps,forecast_row)
+
+  last_real_row <- last_real_row+1
+  
+}
+
+# Clean up column headers
+colnames(forecasted_temps) <- c('Date', 'Temp')
+
+
+
+
+
+
+
+```
 
 
 
