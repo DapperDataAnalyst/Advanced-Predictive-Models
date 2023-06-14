@@ -27,12 +27,7 @@ Because the data are monthly, a seasonal lag term of $S=`r S`$ would be most app
 
 ### Part (b)
 ```{r message=FALSE, warning=FALSE}
-p_args <- c(0,1)
-d_args <- c(0,1)
-q_args <- c(0,1)
-P_args <- c(0,1)
-D_args <- c(0,1)
-Q_args <- c(0,1)
+
 arg_names <- c('p','d','q','P','D','Q')
 
 arg_count <- length(arg_names)
