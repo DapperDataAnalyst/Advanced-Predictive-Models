@@ -1,0 +1,85 @@
+---
+title: "Staff-Graded Time Series EDA and Classical Models"
+output: html_document
+date: "2023-06-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(gridExtra)
+library(tidyverse)
+library(astsa)
+library(xts)
+library(lubridate)
+library(stats)
+
+temps <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/MeanDallasTemps.csv')
+```
+
+## Question 3
+### Part (a)
+
+```{r include = FALSE}
+S <- 12
+```
+Because the data are monthly, a seasonal lag term of $S=`r S`$ would be most appropriate, as we would expect a given month in one year to have average temperatures very similar to the same month in another year.
+
+### Part (b)
+```{r message=FALSE, warning=FALSE}
+p_args <- c(0,1)
+d_args <- c(0,1)
+q_args <- c(0,1)
+P_args <- c(0,1)
+D_args <- c(0,1)
+Q_args <- c(0,1)
+arg_names <- c('p','d','q','P','D','Q')
+
+arg_count <- length(arg_names)
+l <- rep(list(0:1), arg_count)
+
+combo_frame <- data.frame(expand.grid(l))
+colnames(combo_frame) <- arg_names
+rows_to_remove <- combo_frame[combo_frame$P==1 & combo_frame$D==0 & combo_frame$Q==1 & combo_frame$d==0,]
+combo_frame <- combo_frame %>% anti_join(rows_to_remove)
+
+mass_sarima <- function(vect){
+ fit <- sarima(temps$AvgTemp,
+  p = vect[1],
+  d = vect[2],
+  q = vect[3],
+  P = vect[4],
+  D = vect[5],
+  Q = vect[6],
+  S = S,
+  no.constant = TRUE,
+  details = FALSE)
+ return(fit$AICc)
+}
+
+combo_frame <- cbind(combo_frame,apply(combo_frame, MARGIN = 1, mass_sarima))
+names(combo_frame)[7] <- 'AICc'
+best_AICc <- min(combo_frame[,7])
+
+best_parameters <- combo_frame[which.min(combo_frame$AICc),]
+best_parameters
+
+
+```
+
+From this analysis, we find that the minimum AICc value is `r best_parameters[,'AICc']`. This value is found at parameter values p=`r best_parameters[,'p']`, d=`r best_parameters[,'d']`, q=`r best_parameters[,'q']`, P=`r best_parameters[,'P']`, D=`r best_parameters[,'D']`, Q=`r best_parameters[,'Q']`.
+
+### Part (c)
+
+
+
+
+
+
+
+
+
+
+
+
+
