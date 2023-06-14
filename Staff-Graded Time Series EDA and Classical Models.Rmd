@@ -75,7 +75,7 @@ best_parameters
 From this analysis, we find that the minimum AICc value is `r best_parameters[,'AICc']`. This value is found at parameter values p=`r best_parameters[,'p']`, d=`r best_parameters[,'d']`, q=`r best_parameters[,'q']`, P=`r best_parameters[,'P']`, D=`r best_parameters[,'D']`, Q=`r best_parameters[,'Q']`.
 
 ### Part (c)
-```{r 3Qc}
+```{r 3Qc, message=FALSE, warning=FALSE}
 
 # Define ideal parameters from Part (b)
 p <- best_parameters[,'p']
@@ -87,6 +87,8 @@ Q <- best_parameters[,'Q']
 forecasted_temps <- data.frame()
 
 
+
+
 # Find row of Jan 2015
 last_real_row <- which(temps$Month == '2015-01-01')
 
@@ -96,6 +98,8 @@ for (i in 1:(nrow(temps) - last_real_row - 11)) {
   
   # Slice temps data to only include training data
   temp_train <- temps[1:last_real_row,]
+  
+  
   
   # Run SARIMA forecast
   forecast_model <- sarima.for(temp_train$AvgTemp, 
@@ -111,7 +115,7 @@ for (i in 1:(nrow(temps) - last_real_row - 11)) {
   
   # Collect forecast for one year from now and add to forecasted_temps
   next_year_forecast <- forecast_model$pred[12]
-  forecast_row <- c(as.character(temps$Month[last_real_row+12]), as.numeric(next_year_forecast))
+  forecast_row <- c(as.Date(temps$Month[last_real_row+12]), as.numeric(next_year_forecast))
   forecasted_temps <- rbind(forecasted_temps,forecast_row)
 
   last_real_row <- last_real_row+1
@@ -119,9 +123,20 @@ for (i in 1:(nrow(temps) - last_real_row - 11)) {
 }
 
 # Clean up column headers
-colnames(forecasted_temps) <- c('Date', 'Temp')
+colnames(forecasted_temps) <- c('Month', 'ForecastedTemp')
 
 
+
+# Format Month column
+forecasted_temps$Month <- as.Date(forecasted_temps$Month)
+
+# Join real temps and forecasted temps into one data frame
+joined_temps <- left_join(temps, forecasted_temps, by='Month')
+
+
+ggplot(joined_temps) +
+  geom_line(aes(x=Month, y=AvgTemp), color = 'black') +
+  geom_line(aes(x=Month, y=ForecastedTemp), color = '#CC79A7')
 
 
 
