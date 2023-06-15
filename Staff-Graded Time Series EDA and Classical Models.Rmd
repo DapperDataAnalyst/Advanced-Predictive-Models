@@ -267,3 +267,10 @@ The one-year-in-advance prediction of aMDT for January 2018 is $`r joined_temps.
 The upper bound of the prediction interval at this point is $$`r joined_temps.e$ForecastedTemp[which(joined_temps.e$Month == '2018-01-01')]` + `r 1.96*joined_temps.e$SE[which(joined_temps.e$Month == '2018-01-01')]` = `r joined_temps.e$ForecastedTemp[which(joined_temps.e$Month == '2018-01-01')] + 1.96*joined_temps.e$SE[which(joined_temps.e$Month == '2018-01-01')]`$$
 
 The lower bound of the prediction interval at this point is $$`r joined_temps.e$ForecastedTemp[which(joined_temps.e$Month == '2018-01-01')]` - `r 1.96*joined_temps.e$SE[which(joined_temps.e$Month == '2018-01-01')]` = `r joined_temps.e$ForecastedTemp[which(joined_temps.e$Month == '2018-01-01')] - 1.96*joined_temps.e$SE[which(joined_temps.e$Month == '2018-01-01')]`$$
+
+The ARIMA model does not seem to capture seasonal behavior.
+
+This ARIMA(12,1,0) model seems to fit the data better than the ARIMA(3,1,1) model from Part (d), but not as well as the SARIMA model from Part (c). This can be verified by comparing the AICc values from the three models:
+$$SARIMA \space AICc = 5.342$$
+$$ARIMA(3,1,1) \space AICc = 6.000$$
+$$ARIMA(12,1,0) \space AICc = 5.532$$
