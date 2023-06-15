@@ -154,28 +154,23 @@ a3_weights <- c(1,0,0,0,0,0,0,1,0,0,0,0,0,0,1)/3
 a4_weights <- c(1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1)/7
 
 a3_smoothed_data <- accidents %>%
-  group_by(DayOfWeek) %>%
-  mutate(ma = stats::filter(as.numeric(Freq), sides = 2, filter = a3_weights)) %>%
-  ungroup() %>%
-  na.omit
+  mutate(ma = stats::filter(as.numeric(Freq), sides = 2, filter = a3_weights))
+
 
 a4_smoothed_data <- accidents %>%
-  group_by(DayOfWeek) %>%
-  mutate(ma = stats::filter(as.numeric(Freq), sides = 2, filter = a4_weights)) %>%
-  ungroup() %>%
-  na.omit
+  mutate(ma = stats::filter(as.numeric(Freq), sides = 2, filter = a4_weights))
 
 ggplot() +
   geom_point(data = accidents, aes(x = Date, y = Freq), size = 0.3, color = 'black') +
   geom_line(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), linewidth = 0.3) +
-  geom_line(data = a3_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek), linewidth = 1) +
+  geom_line(data = a3_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek, col=DayOfWeek), linewidth = 1) +
   theme_bw() +
   labs(title = 'Original Plot as Given in Homework')
 
 ggplot() +
   geom_point(data = accidents, aes(x = Date, y = Freq), size = 0.3, color = 'black') +
   geom_line(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), linewidth = 0.3) +
-  geom_line(data = a4_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek), linewidth = 1) +
+  geom_line(data = a4_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek, col=DayOfWeek), linewidth = 1) +
   theme_bw() +
   labs(title = 'New Plot Using Filter a4')
 
