@@ -85,6 +85,8 @@ P <- best_parameters[,'P']
 D <- best_parameters[,'D']
 Q <- best_parameters[,'Q']
 forecasted_temps <- data.frame()
+forecasted_temps.d <- data.frame()
+forecasted_temps.e <- data.frame()
 
 
 
@@ -113,30 +115,81 @@ for (i in 1:(nrow(temps) - last_real_row - 11)) {
                         S = S,
                         plot = F)
   
+    forecast_model.d <- sarima.for(temp_train$AvgTemp, 
+                        n.ahead = S, 
+                        p = 3, 
+                        d = 1, 
+                        q = 1,
+                        plot = F)
+    
+    forecast_model.e <- sarima.for(temp_train$AvgTemp, 
+                        n.ahead = S, 
+                        p = 12, 
+                        d = 1, 
+                        q = 0,
+                        plot = F)
+  
   # Collect forecast for one year from now and add to forecasted_temps
   next_year_forecast <- forecast_model$pred[12]
-  forecast_row <- c(as.Date(temps$Month[last_real_row+12]), as.numeric(next_year_forecast))
+  forecast_row <- c(as.Date(temps$Month[last_real_row+12]), as.numeric(next_year_forecast), as.numeric(forecast_model$se[12]))
   forecasted_temps <- rbind(forecasted_temps,forecast_row)
+  
+  next_year_forecast.d <- forecast_model.d$pred[12]
+  forecast_row.d <- c(as.Date(temps$Month[last_real_row+12]), as.numeric(next_year_forecast.d), as.numeric(forecast_model.d$se[12]))
+  forecasted_temps.d <- rbind(forecasted_temps.d,forecast_row.d)
+  
+    next_year_forecast.e <- forecast_model.e$pred[12]
+    forecast_row.e <- c(as.Date(temps$Month[last_real_row+12]), as.numeric(next_year_forecast.e), as.numeric(forecast_model.e$se[12]))
+    forecasted_temps.e <- rbind(forecasted_temps.e,forecast_row.e)
+
+
 
   last_real_row <- last_real_row+1
   
 }
 
 # Clean up column headers
-colnames(forecasted_temps) <- c('Month', 'ForecastedTemp')
-
+colnames(forecasted_temps) <- c('Month', 'ForecastedTemp', 'SE')
+colnames(forecasted_temps.d) <- c('Month', 'ForecastedTemp', 'SE')
+colnames(forecasted_temps.e) <- c('Month', 'ForecastedTemp', 'SE')
 
 
 # Format Month column
 forecasted_temps$Month <- as.Date(forecasted_temps$Month)
+forecasted_temps.d$Month <- as.Date(forecasted_temps.d$Month)
+forecasted_temps.e$Month <- as.Date(forecasted_temps.d$Month)
+
 
 # Join real temps and forecasted temps into one data frame
-joined_temps <- left_join(temps, forecasted_temps, by='Month')
+joined_temps <- temps %>%
+  left_join(forecasted_temps, by='Month')
+
+joined_temps.d <- temps %>%
+  left_join(forecasted_temps.d, by='Month')
+
+joined_temps.e <- temps %>%
+  left_join(forecasted_temps.e, by='Month')
+
+
 
 
 ggplot(joined_temps) +
   geom_line(aes(x=Month, y=AvgTemp), color = 'black') +
-  geom_line(aes(x=Month, y=ForecastedTemp), color = '#CC79A7')
+  geom_line(aes(x=Month, y=ForecastedTemp), color = '#CC79A7') +
+  geom_ribbon(aes(x=Month,
+                  ymin=ForecastedTemp-1.96*SE,
+                  ymax=ForecastedTemp+1.96*SE),
+              alpha=0.4) +
+  theme_bw()
+
+ggplot(joined_temps.d) +
+  geom_line(aes(x=Month, y=AvgTemp), color = 'black') +
+  geom_line(aes(x=Month, y=ForecastedTemp), color = '#CC79A7') +
+  geom_ribbon(aes(x=Month,
+                  ymin=ForecastedTemp-1.96*SE,
+                  ymax=ForecastedTemp+1.96*SE),
+              alpha=0.4) +
+  theme_bw()
 
 
 
@@ -144,14 +197,82 @@ ggplot(joined_temps) +
 
 ```
 
+The one-year-in-advance prediction of aMDT for January 2018 is $`r joined_temps$ForecastedTemp[which(joined_temps$Month == '2018-01-01')]`$.
+
+The upper bound of the prediction interval at this point is $$`r joined_temps$ForecastedTemp[which(joined_temps$Month == '2018-01-01')]` + `r 1.96*joined_temps$SE[which(joined_temps$Month == '2018-01-01')]` = `r joined_temps$ForecastedTemp[which(joined_temps$Month == '2018-01-01')] + 1.96*joined_temps$SE[which(joined_temps$Month == '2018-01-01')]`$$
+
+The lower bound of the prediction interval at this point is $$`r joined_temps$ForecastedTemp[which(joined_temps$Month == '2018-01-01')]` - `r 1.96*joined_temps$SE[which(joined_temps$Month == '2018-01-01')]` = `r joined_temps$ForecastedTemp[which(joined_temps$Month == '2018-01-01')] - 1.96*joined_temps$SE[which(joined_temps$Month == '2018-01-01')]`$$
+
+### Part (d)
+```{r message=FALSE, warning=FALSE}
+full_fit.d <- sarima(temps$AvgTemp,
+              p = 3, 
+              d = 1, 
+              q = 1, 
+              no.constant = TRUE,
+              details = FALSE)
+full_fit.d$AICc
+```
+
+The AICc value for the ARIMA(3,1,1) model fitted to the full aMDT data set is `r full_fit.d$AICc`
+
+
+
+```{r message=FALSE, warning=FALSE}
+ggplot(joined_temps.d) +
+  geom_line(aes(x=Month, y=AvgTemp), color = 'black') +
+  geom_line(aes(x=Month, y=ForecastedTemp), color = '#CC79A7') +
+  geom_ribbon(aes(x=Month,
+                  ymin=ForecastedTemp-1.96*SE,
+                  ymax=ForecastedTemp+1.96*SE),
+              alpha=0.4) +
+  xlim(as.Date('2010-01-01'), as.Date('2020-12-01')) +
+  theme_bw()
 
 
 
 
 
+```
 
+The one-year-in-advance prediction of aMDT for January 2018 is $`r joined_temps.d$ForecastedTemp[which(joined_temps$Month == '2018-01-01')]`$
 
+The upper bound of the prediction interval at this point is $$`r joined_temps.d$ForecastedTemp[which(joined_temps.d$Month == '2018-01-01')]` + `r 1.96*joined_temps.d$SE[which(joined_temps.d$Month == '2018-01-01')]` = `r joined_temps.d$ForecastedTemp[which(joined_temps.d$Month == '2018-01-01')] + 1.96*joined_temps.d$SE[which(joined_temps.d$Month == '2018-01-01')]`$$
 
+The lower bound of the prediction interval at this point is $$`r joined_temps.d$ForecastedTemp[which(joined_temps.d$Month == '2018-01-01')]` - `r 1.96*joined_temps.d$SE[which(joined_temps.d$Month == '2018-01-01')]` = `r joined_temps.d$ForecastedTemp[which(joined_temps.d$Month == '2018-01-01')] - 1.96*joined_temps.d$SE[which(joined_temps.d$Month == '2018-01-01')]`$$
 
+The ARIMA model does not seem to capture seasonal behavior.
 
+The predictions from this ARIMA model come with much more uncertainty than the predictions from the SARIMA model in Part(c).
 
+### Part (e)
+```{r message=FALSE, warning=FALSE}
+full_fit.e <- sarima(temps$AvgTemp,
+              p = 12, 
+              d = 1, 
+              q = 0, 
+              no.constant = TRUE,
+              details = FALSE)
+full_fit.e$AICc
+```
+
+The AICc value for the ARIMA(12,1,0) model fitted to the full aMDT data set is `r full_fit.e$AICc`
+
+```{r message=FALSE, warning=FALSE}
+ggplot(joined_temps.e) +
+  geom_line(aes(x=Month, y=AvgTemp), color = 'black') +
+  geom_line(aes(x=Month, y=ForecastedTemp), color = '#CC79A7') +
+  geom_ribbon(aes(x=Month,
+                  ymin=ForecastedTemp-1.96*SE,
+                  ymax=ForecastedTemp+1.96*SE),
+              alpha=0.4) +
+  xlim(as.Date('2010-01-01'), as.Date('2020-12-01')) +
+  theme_bw()
+
+```
+
+The one-year-in-advance prediction of aMDT for January 2018 is $`r joined_temps.e$ForecastedTemp[which(joined_temps$Month == '2018-01-01')]`$
+
+The upper bound of the prediction interval at this point is $$`r joined_temps.e$ForecastedTemp[which(joined_temps.e$Month == '2018-01-01')]` + `r 1.96*joined_temps.e$SE[which(joined_temps.e$Month == '2018-01-01')]` = `r joined_temps.e$ForecastedTemp[which(joined_temps.e$Month == '2018-01-01')] + 1.96*joined_temps.e$SE[which(joined_temps.e$Month == '2018-01-01')]`$$
+
+The lower bound of the prediction interval at this point is $$`r joined_temps.e$ForecastedTemp[which(joined_temps.e$Month == '2018-01-01')]` - `r 1.96*joined_temps.e$SE[which(joined_temps.e$Month == '2018-01-01')]` = `r joined_temps.e$ForecastedTemp[which(joined_temps.e$Month == '2018-01-01')] - 1.96*joined_temps.e$SE[which(joined_temps.e$Month == '2018-01-01')]`$$
