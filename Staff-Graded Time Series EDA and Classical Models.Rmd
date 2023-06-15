@@ -182,18 +182,6 @@ ggplot(joined_temps) +
               alpha=0.4) +
   theme_bw()
 
-ggplot(joined_temps.d) +
-  geom_line(aes(x=Month, y=AvgTemp), color = 'black') +
-  geom_line(aes(x=Month, y=ForecastedTemp), color = '#CC79A7') +
-  geom_ribbon(aes(x=Month,
-                  ymin=ForecastedTemp-1.96*SE,
-                  ymax=ForecastedTemp+1.96*SE),
-              alpha=0.4) +
-  theme_bw()
-
-
-
-
 
 ```
 
