@@ -1,0 +1,178 @@
+---
+title: "Staff-Graded Time Series EDA and Classical Models"
+output: html_document
+date: "2023-06-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(gridExtra)
+library(tidyverse)
+library(astsa)
+library(xts)
+library(lubridate)
+library(stats)
+
+temps <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/MeanDallasTemps.csv')
+```
+
+## Question 3
+### Part (a)
+
+```{r include = FALSE}
+S <- 12
+```
+Because the data are monthly, a seasonal lag term of $S=`r S`$ would be most appropriate, as we would expect a given month in one year to have average temperatures very similar to the same month in another year.
+
+### Part (b)
+```{r message=FALSE, warning=FALSE}
+
+arg_names <- c('p','d','q','P','D','Q')
+
+arg_count <- length(arg_names)
+l <- rep(list(0:1), arg_count)
+
+# Make data frame containing all combinations of the parameters
+combo_frame <- data.frame(expand.grid(l))
+
+# Clean up column names
+colnames(combo_frame) <- arg_names
+
+# Remove rows as instructed in homework document
+rows_to_remove <- combo_frame[combo_frame$P==1 & combo_frame$D==0 & combo_frame$Q==1 & combo_frame$d==0,]
+combo_frame <- combo_frame %>% anti_join(rows_to_remove)
+
+
+# Make custom function to run SARIMA on all parameter combos
+mass_sarima <- function(vect){
+ fit <- sarima(temps$AvgTemp,
+  p = vect[1],
+  d = vect[2],
+  q = vect[3],
+  P = vect[4],
+  D = vect[5],
+  Q = vect[6],
+  S = S,
+  no.constant = TRUE,
+  details = FALSE)
+ return(fit$AICc)
+}
+
+# Bind AICc outputs to combo_frame
+combo_frame <- cbind(combo_frame,apply(combo_frame, MARGIN = 1, mass_sarima))
+
+# Clean up column name
+names(combo_frame)[7] <- 'AICc'
+
+# Find lowest AICc and return the parameter set that generates it
+best_AICc <- min(combo_frame[,7])
+best_parameters <- combo_frame[which.min(combo_frame$AICc),]
+best_parameters
+
+```
+
+From this analysis, we find that the minimum AICc value is `r best_parameters[,'AICc']`. This value is found at parameter values p=`r best_parameters[,'p']`, d=`r best_parameters[,'d']`, q=`r best_parameters[,'q']`, P=`r best_parameters[,'P']`, D=`r best_parameters[,'D']`, Q=`r best_parameters[,'Q']`.
+
+### Part (c)
+```{r 3Qc, message=FALSE, warning=FALSE}
+
+# Define ideal parameters from Part (b)
+p <- best_parameters[,'p']
+d <- best_parameters[,'d']
+q <- best_parameters[,'q']
+P <- best_parameters[,'P']
+D <- best_parameters[,'D']
+Q <- best_parameters[,'Q']
+forecasted_temps <- data.frame()
+forecasted_temps_ARIMA <- data.frame()
+
+
+
+
+# Find row of Jan 2015
+last_real_row <- which(temps$Month == '2015-01-01')
+
+
+for (i in 1:(nrow(temps) - last_real_row - 11)) {
+  
+  
+  # Slice temps data to only include training data
+  temp_train <- temps[1:last_real_row,]
+  
+  
+  
+  # Run SARIMA forecast
+  forecast_model <- sarima.for(temp_train$AvgTemp, 
+                        n.ahead = S, 
+                        p = p, 
+                        d = d, 
+                        q = q,
+                        P = P,
+                        D = D,
+                        Q = Q,
+                        S = S,
+                        plot = F)
+    forecast_model_ARIMA <- sarima.for(temp_train$AvgTemp, 
+                        n.ahead = S, 
+                        p = p, 
+                        d = d, 
+                        q = q,
+                        plot = F)
+  
+  # Collect forecast for one year from now and add to forecasted_temps
+  next_year_forecast <- forecast_model$pred[12]
+  forecast_row <- c(as.Date(temps$Month[last_real_row+12]), as.numeric(next_year_forecast), as.numeric(forecast_model$se[12]))
+  forecasted_temps <- rbind(forecasted_temps,forecast_row)
+  
+  next_year_forecast_ARIMA <- forecast_model_ARIMA$pred[12]
+  forecast_row_ARIMA <- c(as.Date(temps$Month[last_real_row+12]), as.numeric(next_year_forecast_ARIMA), as.numeric(forecast_model_ARIMA$se[12]))
+
+  last_real_row <- last_real_row+1
+  
+}
+
+# Clean up column headers
+colnames(forecasted_temps) <- c('Month', 'ForecastedTemp', 'SE')
+
+# Format Month column
+forecasted_temps$Month <- as.Date(forecasted_temps$Month)
+
+
+# Join real temps and forecasted temps into one data frame
+joined_temps <- temps %>%
+  left_join(forecasted_temps, by='Month')
+
+
+
+
+ggplot(joined_temps) +
+  geom_line(aes(x=Month, y=AvgTemp), color = 'black') +
+  geom_line(aes(x=Month, y=ForecastedTemp), color = '#CC79A7') +
+  geom_ribbon(aes(x=Month,
+                  ymin=ForecastedTemp-1.96*SE,
+                  ymax=ForecastedTemp+1.96*SE),
+              alpha=0.4) +
+  theme_bw()
+
+
+
+
+
+```
+
+The one-year-in-advance prediction of aMDT for January 2018 is $`r joined_temps$ForecastedTemp[which(joined_temps$Month == '2018-01-01')]`$.
+
+The upper bound of the prediction interval at this point is $$`r joined_temps$ForecastedTemp[which(joined_temps$Month == '2018-01-01')]` + `r joined_temps$SE[which(joined_temps$Month == '2018-01-01')]` = `r joined_temps$ForecastedTemp[which(joined_temps$Month == '2018-01-01')] + joined_temps$SE[which(joined_temps$Month == '2018-01-01')]`$$
+
+The lower bound of the prediction interval at this point is $$`r joined_temps$ForecastedTemp[which(joined_temps$Month == '2018-01-01')]` - `r joined_temps$SE[which(joined_temps$Month == '2018-01-01')]` = `r joined_temps$ForecastedTemp[which(joined_temps$Month == '2018-01-01')] - joined_temps$SE[which(joined_temps$Month == '2018-01-01')]`$$
+
+
+
+
+
+
+
+
+
+
