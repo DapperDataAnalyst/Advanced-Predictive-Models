@@ -96,6 +96,9 @@ Thus, the estimate for $\phi_1 = 0.7183$, $\theta_1 = -0.4535$, and $\Theta_1 = 
 
 
 ### Part (c)
+
+In the following code block, we will do the main data manipulation work of Parts (c), (d), and (e), with plots appearing in their respective subparts.
+
 ```{r 3Qc, message=FALSE, warning=FALSE}
 
 # Define ideal parameters from Part (b)
@@ -195,6 +198,17 @@ joined_temps.d <- temps %>%
 joined_temps.e <- temps %>%
   left_join(forecasted_temps.e, by='Month')
 
+# The one-year-in-advance prediction
+joined_temps$ForecastedTemp[which(joined_temps$Month == '2018-01-01')]
+
+# The upper bound of the prediction interval
+joined_temps$ForecastedTemp[which(joined_temps$Month == '2018-01-01')] + 1.96*joined_temps$SE[which(joined_temps$Month == '2018-01-01')]
+
+# The lower bound of the prediction interval
+joined_temps$ForecastedTemp[which(joined_temps$Month == '2018-01-01')] - 1.96*joined_temps$SE[which(joined_temps$Month == '2018-01-01')]
+
+
+
 
 
 # Graph for Part (c)
@@ -234,6 +248,15 @@ The AICc value for the ARIMA(3,1,1) model fitted to the full aMDT data set is `r
 
 
 ```{r message=FALSE, warning=FALSE}
+
+# The one-year-in-advance prediction
+joined_temps.d$ForecastedTemp[which(joined_temps$Month == '2018-01-01')]
+
+# The upper bound of the prediction interval
+joined_temps.d$ForecastedTemp[which(joined_temps.d$Month == '2018-01-01')] + 1.96*joined_temps.d$SE[which(joined_temps.d$Month == '2018-01-01')]
+
+# The lower bound of the prediction interval
+joined_temps.d$ForecastedTemp[which(joined_temps.d$Month == '2018-01-01')] - 1.96*joined_temps.d$SE[which(joined_temps.d$Month == '2018-01-01')]
 
 # Graph for Part (d)
 ggplot(joined_temps.d) +
@@ -275,6 +298,16 @@ The AICc value for the ARIMA(12,1,0) model fitted to the full aMDT data set is `
 
 ```{r message=FALSE, warning=FALSE}
 
+# The one-year-in-advance prediction
+joined_temps.e$ForecastedTemp[which(joined_temps$Month == '2018-01-01')]
+
+# The upper bound of the prediction interval
+joined_temps.e$ForecastedTemp[which(joined_temps.e$Month == '2018-01-01')] + 1.96*joined_temps.e$SE[which(joined_temps.e$Month == '2018-01-01')]
+
+# The lower bound of the prediction interval
+joined_temps.e$ForecastedTemp[which(joined_temps.e$Month == '2018-01-01')] - 1.96*joined_temps.e$SE[which(joined_temps.e$Month == '2018-01-01')]
+
+
 # Graph for Part (e)
 ggplot(joined_temps.e) +
   geom_line(aes(x=Month, y=AvgTemp), color = 'black') +
@@ -294,7 +327,7 @@ The upper bound of the prediction interval at this point is $$`r joined_temps.e$
 
 The lower bound of the prediction interval at this point is $$`r joined_temps.e$ForecastedTemp[which(joined_temps.e$Month == '2018-01-01')]` - `r 1.96*joined_temps.e$SE[which(joined_temps.e$Month == '2018-01-01')]` = `r joined_temps.e$ForecastedTemp[which(joined_temps.e$Month == '2018-01-01')] - 1.96*joined_temps.e$SE[which(joined_temps.e$Month == '2018-01-01')]`$$
 
-The ARIMA model does not seem to capture seasonal behavior.
+The ARIMA model does seem to capture seasonal behavior. Though not specifically equipped to handle seasonality like a full SARIMA model, this ARIMA model follows the true data closely enough to partially capture the data's seasonal fluctuations.
 
 This ARIMA(12,1,0) model seems to fit the data better than the ARIMA(3,1,1) model from Part (d), but not as well as the SARIMA model from Part (c). This can be verified by comparing the AICc values from the three models:
 $$SARIMA \space AICc = `r full_fit$AICc`$$
