@@ -30,6 +30,7 @@ accidents <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalys
 order_count <- 3
 fit_objects <- matrix(rep(0,order_count), nrow = order_count, ncol = order_count)
 
+# Iterate over various p, q combos and fit model for each
 for (p in 1:3){
   for (q in 1:3){
     fit <- sarima(ARMAdata1$x,
@@ -39,6 +40,7 @@ for (p in 1:3){
                   no.constant = TRUE,
                   details = FALSE)
     
+    # Capture each model's AICc
     fit_objects[p,q] <- fit$AICc
     
   }
@@ -66,13 +68,17 @@ sarima(ARMAdata1$x,
 From the output shown above, our ARMA model is as follows:
 $$x_t = \phi_1 x_{t-1} + \phi_2 x_{t-2} + \phi_3 x_{t-3} + \theta_1 w_{t-1} + w_t$$
 $$= 0.7996 x_{t-1} + 0.5480 x_{t-2} - 0.7759 x_{t-3} + 0.5535 w_{t-1} + w_t$$
-Here, the estimated value of $\sigma^2_w = 1.028$
+Here, the estimated value of $\sigma^2_w = 1.028$. Thus $w_t \sim N(0, 1.028)$
 
 ### Part (c)
 ```{r Q1c, message=FALSE, warning=FALSE}
+
 n_train = 150
+
+# Slice original data to get training data
 ARMAdata2_train <- ARMAdata2[1:n_train,]
 
+# Fit ARIMA on training data
 fit <- sarima(ARMAdata2_train$x,
                   p = 2, 
                   d = 0, 
@@ -82,12 +88,13 @@ fit <- sarima(ARMAdata2_train$x,
 
 fit
 
-
 ```
 The resulting AICc value is `r fit$AICc`
 
 ### Part (d)
 ```{r Q1d}
+
+
 n <- nrow(ARMAdata2)
 fit_train <- sarima(ARMAdata2_train$x,
               p = 2, 
@@ -96,6 +103,7 @@ fit_train <- sarima(ARMAdata2_train$x,
               no.constant = TRUE,
               details = FALSE)
 
+# Run ARIMA forecast
 fit_for <- sarima.for(ARMAdata2_train$x, 
                       n.ahead = n - n_train, 
                       p = 2, 
@@ -103,6 +111,7 @@ fit_for <- sarima.for(ARMAdata2_train$x,
                       q = 2,
                       plot = F)
 
+# Prepare data for graphing
 fit_data <- bind_rows(
   data.frame(Time = 1:n,
              Type = factor(rep("Given Data", n),
@@ -122,6 +131,7 @@ fit_pred_data <- data.frame(Time = 1:nrow(ARMAdata2),
                                   as.numeric(fit_for$pred)),
                           SE = c(rep(sqrt(fit_train$fit$sigma2), n_train), as.numeric(fit_for$se)))
 
+# Create graph
 gg_fit <- ggplot(fit_data,
                  aes(x = Time)) +
   geom_line(aes(y = x, col = Type)) +
@@ -149,7 +159,7 @@ The top plot, with more erratic data, corresponds to $a_1$, while the bottom plo
 
 ### Part (b)
 ```{r Q2b, message=FALSE, warning=FALSE}
-#accidents$Date <- as.Date(accidents$Date)
+
 a3_weights <- c(1,0,0,0,0,0,0,1,0,0,0,0,0,0,1)/3
 a4_weights <- c(1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1)/7
 

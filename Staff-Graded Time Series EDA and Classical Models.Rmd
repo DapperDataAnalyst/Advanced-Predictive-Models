@@ -69,10 +69,31 @@ names(combo_frame)[7] <- 'AICc'
 best_AICc <- min(combo_frame[,7])
 best_parameters <- combo_frame[which.min(combo_frame$AICc),]
 best_parameters
-
 ```
 
 From this analysis, we find that the minimum AICc value is `r best_parameters[,'AICc']`. This value is found at parameter values p=`r best_parameters[,'p']`, d=`r best_parameters[,'d']`, q=`r best_parameters[,'q']`, P=`r best_parameters[,'P']`, D=`r best_parameters[,'D']`, Q=`r best_parameters[,'Q']`.
+
+We can use these best parameters to find their corresponding model coefficient estimates given the data, as follows:
+
+```{r}
+
+full_fit <- sarima(temps$AvgTemp,
+                p=1,
+                d=0,
+                q=1,
+                P=0,
+                D=1,
+                Q=1,
+                S=12,
+                no.constant = T,
+                details=F)
+
+full_fit$fit$coef
+
+```
+
+Thus, the estimate for $\phi_1 = 0.7183$, $\theta_1 = -0.4535$, and $\Theta_1 = -1.000$.
+
 
 ### Part (c)
 ```{r 3Qc, message=FALSE, warning=FALSE}
@@ -84,17 +105,16 @@ q <- best_parameters[,'q']
 P <- best_parameters[,'P']
 D <- best_parameters[,'D']
 Q <- best_parameters[,'Q']
+
+# Create empty data frames to be filled later
 forecasted_temps <- data.frame()
 forecasted_temps.d <- data.frame()
 forecasted_temps.e <- data.frame()
 
-
-
-
 # Find row of Jan 2015
 last_real_row <- which(temps$Month == '2015-01-01')
 
-
+# 'For' loop to iterate through the months starting Jan 2016
 for (i in 1:(nrow(temps) - last_real_row - 11)) {
   
   
@@ -115,32 +135,34 @@ for (i in 1:(nrow(temps) - last_real_row - 11)) {
                         S = S,
                         no.constant = T,
                         plot = F)
-  
-    forecast_model.d <- sarima.for(temp_train$AvgTemp, 
-                        n.ahead = S, 
-                        p = 3, 
-                        d = 1, 
-                        q = 1,
-                        no.constant = T,
-                        plot = F)
-    
-    forecast_model.e <- sarima.for(temp_train$AvgTemp, 
-                        n.ahead = S, 
-                        p = 12, 
-                        d = 1, 
-                        q = 0,
-                        no.constant = T,
-                        plot = F)
+  # Run ARIMA forecast
+  forecast_model.d <- sarima.for(temp_train$AvgTemp, 
+                      n.ahead = S, 
+                      p = 3, 
+                      d = 1, 
+                      q = 1,
+                      no.constant = T,
+                      plot = F)
+  # Run ARIMA forecast
+  forecast_model.e <- sarima.for(temp_train$AvgTemp, 
+                      n.ahead = S, 
+                      p = 12, 
+                      d = 1, 
+                      q = 0,
+                      no.constant = T,
+                      plot = F)
   
   # Collect forecast for one year from now and add to forecasted_temps
   next_year_forecast <- forecast_model$pred[12]
   forecast_row <- c(as.Date(temps$Month[last_real_row+12]), as.numeric(next_year_forecast), as.numeric(forecast_model$se[12]))
   forecasted_temps <- rbind(forecasted_temps,forecast_row)
   
+  # Collect forecast for one year from now and add to forecasted_temps.d
   next_year_forecast.d <- forecast_model.d$pred[12]
   forecast_row.d <- c(as.Date(temps$Month[last_real_row+12]), as.numeric(next_year_forecast.d), as.numeric(forecast_model.d$se[12]))
   forecasted_temps.d <- rbind(forecasted_temps.d,forecast_row.d)
   
+  # Collect forecast for one year from now and add to forecasted_temps.e
     next_year_forecast.e <- forecast_model.e$pred[12]
     forecast_row.e <- c(as.Date(temps$Month[last_real_row+12]), as.numeric(next_year_forecast.e), as.numeric(forecast_model.e$se[12]))
     forecasted_temps.e <- rbind(forecasted_temps.e,forecast_row.e)
@@ -175,7 +197,7 @@ joined_temps.e <- temps %>%
 
 
 
-
+# Graph for Part (c)
 ggplot(joined_temps) +
   geom_line(aes(x=Month, y=AvgTemp), color = 'black') +
   geom_line(aes(x=Month, y=ForecastedTemp), color = '#CC79A7') +
@@ -196,6 +218,8 @@ The lower bound of the prediction interval at this point is $$`r joined_temps$Fo
 
 ### Part (d)
 ```{r message=FALSE, warning=FALSE}
+
+# Run ARIMA fit for Part (d)
 full_fit.d <- sarima(temps$AvgTemp,
               p = 3, 
               d = 1, 
@@ -210,6 +234,8 @@ The AICc value for the ARIMA(3,1,1) model fitted to the full aMDT data set is `r
 
 
 ```{r message=FALSE, warning=FALSE}
+
+# Graph for Part (d)
 ggplot(joined_temps.d) +
   geom_line(aes(x=Month, y=AvgTemp), color = 'black') +
   geom_line(aes(x=Month, y=ForecastedTemp), color = '#CC79A7') +
@@ -220,10 +246,6 @@ ggplot(joined_temps.d) +
   xlim(as.Date('2010-01-01'), as.Date('2020-12-01')) +
   theme_bw()
 
-
-
-
-
 ```
 
 The one-year-in-advance prediction of aMDT for January 2018 is $`r joined_temps.d$ForecastedTemp[which(joined_temps$Month == '2018-01-01')]`$
@@ -232,12 +254,14 @@ The upper bound of the prediction interval at this point is $$`r joined_temps.d$
 
 The lower bound of the prediction interval at this point is $$`r joined_temps.d$ForecastedTemp[which(joined_temps.d$Month == '2018-01-01')]` - `r 1.96*joined_temps.d$SE[which(joined_temps.d$Month == '2018-01-01')]` = `r joined_temps.d$ForecastedTemp[which(joined_temps.d$Month == '2018-01-01')] - 1.96*joined_temps.d$SE[which(joined_temps.d$Month == '2018-01-01')]`$$
 
-The ARIMA model does not seem to capture seasonal behavior.
+The ARIMA model does seem to capture seasonal behavior. Though not specifically equipped to handle seasonality like a full SARIMA model, this ARIMA model follows the true data closely enough to partially capture the data's seasonal fluctuations.
 
-The predictions from this ARIMA model come with much more uncertainty than the predictions from the SARIMA model in Part(c).
+The predictions from this ARIMA model come with much more uncertainty than the predictions from the SARIMA model in Part(c). The AICc of the full SARIMA model is `r full_fit$AICc`, whereas the AICc for this ARIMA model is `r full_fit.d$AICc`
 
 ### Part (e)
 ```{r message=FALSE, warning=FALSE}
+
+# Run ARIMA fit for Part (e)
 full_fit.e <- sarima(temps$AvgTemp,
               p = 12, 
               d = 1, 
@@ -250,6 +274,8 @@ full_fit.e$AICc
 The AICc value for the ARIMA(12,1,0) model fitted to the full aMDT data set is `r full_fit.e$AICc`
 
 ```{r message=FALSE, warning=FALSE}
+
+# Graph for Part (e)
 ggplot(joined_temps.e) +
   geom_line(aes(x=Month, y=AvgTemp), color = 'black') +
   geom_line(aes(x=Month, y=ForecastedTemp), color = '#CC79A7') +
@@ -271,6 +297,6 @@ The lower bound of the prediction interval at this point is $$`r joined_temps.e$
 The ARIMA model does not seem to capture seasonal behavior.
 
 This ARIMA(12,1,0) model seems to fit the data better than the ARIMA(3,1,1) model from Part (d), but not as well as the SARIMA model from Part (c). This can be verified by comparing the AICc values from the three models:
-$$SARIMA \space AICc = 5.342$$
-$$ARIMA(3,1,1) \space AICc = 6.000$$
-$$ARIMA(12,1,0) \space AICc = 5.532$$
+$$SARIMA \space AICc = `r full_fit$AICc`$$
+$$ARIMA(3,1,1) \space AICc = `r full_fit.d$AICc`$$
+$$ARIMA(12,1,0) \space AICc = `r full_fit.e$AICc`$$
