@@ -1,0 +1,83 @@
+---
+title: "Staff-Graded Time Series State-Space and Hidden Markov Models"
+output: html_document
+date: "2023-06-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(gridExtra)
+library(xts)
+library(depmixS4)
+library(dlm)
+
+DLM_data <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/DLM_Data.csv')
+
+```
+
+## Question 1
+### Part (a)
+
+```{r}
+F_t <- 1.2
+G_t <- 0.8
+m0 <- 0
+C0 <- 25
+sigma2nu <- 9
+sigma2omega <- 4
+n <- nrow(DLM_data)
+# theta <- rep(NA, n)
+# theta0 <- rnorm(1, mean = m0, sd = sqrt(C0))
+# 
+# theta[1] <- 0.8*theta0 + rnorm(1, 0, sqrt(sigma2omega))
+# for(i in 2:n) theta[i] <- 0.8*theta[i-1] + rnorm(1, 0, sqrt(sigma2omega))
+
+DLM_model <- dlm(FF = F_t,
+               GG = G_t,
+               V = sigma2nu,
+               W = sigma2omega,
+               m0 = m0,
+               C0 = C0) 
+
+DLM_data_filtered <- dlmFilter(y = DLM_data$yt,
+                               mod = DLM_model)
+
+
+DLM_data$pred <- DLM_data_filtered$a
+DLM_data$pSE <- sqrt(unlist(
+  dlmSvd2var(DLM_data_filtered$U.R, 
+             DLM_data_filtered$D.R)))
+
+
+
+
+gg_DLM <- ggplot(DLM_data) +
+  geom_line(aes(y = yt, x = time), 
+            linetype = "dashed",
+            color = "black") +
+  geom_line(aes(y = pred, x = time),
+            color = "red",
+            size = 1.2) +
+  geom_ribbon(aes(x = time, 
+                  ymin = pred - 1.96 * pSE,
+                  ymax = pred + 1.96 * pSE),
+                  fill = "red",
+              alpha = 0.2) +
+  ylab(NULL) +
+  theme_bw()
+
+
+gg_DLM
+
+# DLM_data$filtered <- dropFirst(DLM_data_filtered$m)
+# 
+# DLM_data$fSE <- dropFirst(sqrt(unlist(
+#   dlmSvd2var(DLM_data_filtered$U.C, 
+#              DLM_data_filtered$D.C))))
+
+a40 <- G_t*DLM_data$pred[39]
+R40 <- G_t*DLM_data$SE[39]^2*t(G_t)
+```
+
