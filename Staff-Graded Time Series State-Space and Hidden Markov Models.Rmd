@@ -80,6 +80,7 @@ Using the process above, we find $a_{40} = `r a40`$ and $R_{40} = `r R40`$
 ```{r}
 
 DLM_data$ft <- DLM_data$pred * Ft
+DLM_data$Qt <- Ft*DLM_data$pSE^2*t(Ft) + sigma2nu
 
 ggplot(DLM_data) +
   geom_line(aes(y = yt, x = time), 
@@ -89,8 +90,8 @@ ggplot(DLM_data) +
             color = "blue",
             size = 1.2) +
   geom_ribbon(aes(x = time, 
-                  ymin = pred - 1.96 * pSE,
-                  ymax = pred + 1.96 * pSE),
+                  ymin = ft - 1.96 * sqrt(Qt),
+                  ymax = ft + 1.96 * sqrt(Qt)),
                   fill = "blue",
               alpha = 0.2) +
   ylab(NULL) +
@@ -100,7 +101,7 @@ f40 <- Ft*a40
 Q40 <- Ft*R40*t(Ft) + sigma2nu
 
 f40
-Q40[1]
+DLM_data$Qt[40]
 
 ```
 
@@ -121,8 +122,8 @@ ggplot(DLM_data) +
             color = "green",
             size = 1.2) +
   geom_ribbon(aes(x = time, 
-                  ymin = pred - 1.96 * fSE,
-                  ymax = pred + 1.96 * fSE),
+                  ymin = filtered - 1.96 * fSE,
+                  ymax = filtered + 1.96 * fSE),
                   fill = "green",
               alpha = 0.2) +
   ylab(NULL) +
@@ -139,7 +140,7 @@ C40
 
 ### Part (d)
 
-We are given from the lecture notes that $a_t = E[ \theta_t | y_{1:(t-1)}] = G_t m_{t-1}$
+For $a_{30}$ we are given from the lecture notes that $a_t = E[ \theta_t | y_{1:(t-1)}] = G_t m_{t-1}$
 
 We have found that $m_{22} = 3.539$ and we are given that $Gt = `r Gt`$.
 
@@ -148,7 +149,82 @@ $$\theta_{t+k} = G_t^k * m_t$$
 $$\theta_{30} = G_t^{30-22} * m_{22}$$
 $$= (0.8)^8 * 3.539 = 0.5937457$$
 
+For $R_t$ we are given from the lecture notes that $R_t = Var[\theta_t | y_{1:(t-1)}] = G_t C_{t-1} G_t' + W_t$
 
+We have found that $C_{22} = 3.048$
+
+From this, we can find that $R_{23} = G_t(3.048)G_t' + 4 = 3.048G_t^2 + 4$ since $G_t$ is a one-dimensional vector.
+
+Similarly, we could find $R_{25}$ as $G_t^2(R_{24}) + 4 = 3.048G_t^6 + 4G_t^4 + 4G_t^2 + 4$
+
+We can continue this process until we find $R_{30}$. Using a geometric series to simplify notation:
+$$R_{30} = 3.048G_t^{16} + 4\sum_{k=0}^7 G_t^{2k} = 10.88415$$
+
+Now that we have found this expression analytically, though the question states to not use code, we run an R calculation solely to verify that our expression does indeed equal 10.884:
+```{r}
+3.048*Gt^16 + 4*(Gt^14 + Gt^12 + Gt^10 + Gt^8 + Gt^6 + Gt^4 + Gt^2 + 1)
+
+```
+
+### Part (e)
+```{r}
+DLM_data_smoothed <- dlmSmooth(DLM_data_filtered)
+DLM_data$smoothed <- dropFirst(DLM_data_smoothed$s)
+DLM_data$sSE <- dropFirst(sqrt(unlist(
+  dlmSvd2var(DLM_data_smoothed$U.S, 
+             DLM_data_smoothed$D.S))))
+
+ggplot(DLM_data) +
+  geom_line(aes(y = yt, x = time), 
+            linetype = "dashed",
+            color = "black") +
+  geom_line(aes(y = smoothed, x = time),
+            color = "green",
+            size = 1.2) +
+  geom_ribbon(aes(x = time, 
+                  ymin = smoothed - 1.96 * sSE,
+                  ymax = smoothed + 1.96 * sSE),
+                  fill = "green",
+              alpha = 0.2) +
+  ylab(NULL) +
+  theme_bw()
+
+# Theta values at missing values of y:
+filled_holes <- cbind(which(is.na(DLM_data), arr.ind=F),DLM_data[which(is.na(DLM_data), arr.ind=F),c('yt', 'smoothed')])
+
+colnames(filled_holes) <- c('row', 'yt', 'smoothed')
+
+filled_holes
+
+```
+
+
+### Part (f)
+```{r}
+forecast_extension <- dlmForecast(DLM_data_filtered, nAhead = 50)
+pared_DLM_data <- DLM_data[,c('yt', 'time', 'Qt')]
+forecast_table <- data.frame(yt = forecast_extension$f,
+                                 time = seq(from = 101, to = 150),
+                                 Qt = unlist(forecast_extension$Q))
+
+
+
+ggplot(pared_DLM_data) +
+  geom_line(aes(y = yt, x = time), 
+            linetype = "dashed",
+            color = "black") +
+  geom_line(data = forecast_table, aes(y = yt, x = time),
+            color = "purple",
+            size = 1.2) +
+  geom_ribbon(aes(x = time,
+                  ymin = yt - 1.96 * sqrt(Qt),
+                  ymax = yt + 1.96 * sqrt(Qt)),
+                  fill = "purple",
+              alpha = 0.2) +
+  ylab(NULL) +
+  theme_bw()
+
+```
 
 
 
