@@ -17,24 +17,19 @@ DLM_data <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst
 
 ```
 
-## Question 1
 ### Part (a)
 
-```{r}
-F_t <- 1.2
+```{r message=FALSE, warning=FALSE}
+Ft <- 1.2
 G_t <- 0.8
 m0 <- 0
 C0 <- 25
 sigma2nu <- 9
 sigma2omega <- 4
 n <- nrow(DLM_data)
-# theta <- rep(NA, n)
-# theta0 <- rnorm(1, mean = m0, sd = sqrt(C0))
-# 
-# theta[1] <- 0.8*theta0 + rnorm(1, 0, sqrt(sigma2omega))
-# for(i in 2:n) theta[i] <- 0.8*theta[i-1] + rnorm(1, 0, sqrt(sigma2omega))
 
-DLM_model <- dlm(FF = F_t,
+
+DLM_model <- dlm(FF = Ft,
                GG = G_t,
                V = sigma2nu,
                W = sigma2omega,
@@ -49,8 +44,6 @@ DLM_data$pred <- DLM_data_filtered$a
 DLM_data$pSE <- sqrt(unlist(
   dlmSvd2var(DLM_data_filtered$U.R, 
              DLM_data_filtered$D.R)))
-
-
 
 
 gg_DLM <- ggplot(DLM_data) +
@@ -71,13 +64,45 @@ gg_DLM <- ggplot(DLM_data) +
 
 gg_DLM
 
-# DLM_data$filtered <- dropFirst(DLM_data_filtered$m)
-# 
-# DLM_data$fSE <- dropFirst(sqrt(unlist(
-#   dlmSvd2var(DLM_data_filtered$U.C, 
-#              DLM_data_filtered$D.C))))
 
-a40 <- G_t*DLM_data$pred[39]
-R40 <- G_t*DLM_data$SE[39]^2*t(G_t)
+a40 <- DLM_data$pred[40]
+R40 <- DLM_data$pSE[40]^2
+
+a40
+R40
+
 ```
+
+Using the process above, we find $a_{40} = `r a40`$ and $R_{40} = `r R40`$
+
+### Part (b)
+
+```{r}
+
+DLM_data$ft <- DLM_data$pred * Ft
+
+ggplot(DLM_data) +
+  geom_line(aes(y = yt, x = time), 
+            linetype = "dashed",
+            color = "black") +
+  geom_line(aes(y = ft, x = time),
+            color = "blue",
+            size = 1.2) +
+  geom_ribbon(aes(x = time, 
+                  ymin = pred - 1.96 * pSE,
+                  ymax = pred + 1.96 * pSE),
+                  fill = "blue",
+              alpha = 0.2) +
+  ylab(NULL) +
+  theme_bw()
+
+f40 <- Ft*a40
+Q40 <- Ft*R40*t(Ft)
+
+f40
+Q40[1] + sigma2nu
+
+```
+
+
 
