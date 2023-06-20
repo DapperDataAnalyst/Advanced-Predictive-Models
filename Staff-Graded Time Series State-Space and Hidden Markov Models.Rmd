@@ -21,7 +21,7 @@ DLM_data <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst
 
 ```{r message=FALSE, warning=FALSE}
 Ft <- 1.2
-G_t <- 0.8
+Gt <- 0.8
 m0 <- 0
 C0 <- 25
 sigma2nu <- 9
@@ -30,7 +30,7 @@ n <- nrow(DLM_data)
 
 
 DLM_model <- dlm(FF = Ft,
-               GG = G_t,
+               GG = Gt,
                V = sigma2nu,
                W = sigma2omega,
                m0 = m0,
@@ -97,12 +97,62 @@ ggplot(DLM_data) +
   theme_bw()
 
 f40 <- Ft*a40
-Q40 <- Ft*R40*t(Ft)
+Q40 <- Ft*R40*t(Ft) + sigma2nu
 
 f40
-Q40[1] + sigma2nu
+Q40[1]
 
 ```
+
+### Part (c)
+
+```{r}
+
+DLM_data$filtered <- dropFirst(DLM_data_filtered$m)
+DLM_data$fSE <- dropFirst(sqrt(unlist(
+  dlmSvd2var(DLM_data_filtered$U.C, 
+             DLM_data_filtered$D.C))))
+
+ggplot(DLM_data) +
+  geom_line(aes(y = yt, x = time), 
+            linetype = "dashed",
+            color = "black") +
+  geom_line(aes(y = filtered, x = time),
+            color = "green",
+            size = 1.2) +
+  geom_ribbon(aes(x = time, 
+                  ymin = pred - 1.96 * fSE,
+                  ymax = pred + 1.96 * fSE),
+                  fill = "green",
+              alpha = 0.2) +
+  ylab(NULL) +
+  theme_bw()
+
+
+m40 <- DLM_data$filtered[40]
+C40 <- DLM_data$fSE[40]^2
+
+m40
+C40
+
+```
+
+### Part (d)
+
+We are given from the lecture notes that $a_t = E[ \theta_t | y_{1:(t-1)}] = G_t m_{t-1}$
+
+We have found that $m_{22} = 3.539$ and we are given that $Gt = `r Gt`$.
+
+We can use this information to "traverse" from $t = 22$ to $t = 30$ as follows:
+$$\theta_{t+k} = G_t^k * m_t$$
+$$\theta_{30} = G_t^{30-22} * m_{22}$$
+$$= (0.8)^8 * 3.539 = 0.5937457$$
+
+
+
+
+
+
 
 
 
