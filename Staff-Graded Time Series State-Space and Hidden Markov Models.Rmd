@@ -20,6 +20,7 @@ DLM_data <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst
 ### Part (a)
 
 ```{r message=FALSE, warning=FALSE}
+# Set constants
 Ft <- 1.2
 Gt <- 0.8
 m0 <- 0
@@ -29,6 +30,7 @@ sigma2omega <- 4
 n <- nrow(DLM_data)
 
 
+# Run model
 DLM_model <- dlm(FF = Ft,
                GG = Gt,
                V = sigma2nu,
@@ -36,16 +38,19 @@ DLM_model <- dlm(FF = Ft,
                m0 = m0,
                C0 = C0) 
 
+# Apply filter
 DLM_data_filtered <- dlmFilter(y = DLM_data$yt,
                                mod = DLM_model)
 
 
+# Extract values of interest
 DLM_data$pred <- DLM_data_filtered$a
 DLM_data$pSE <- sqrt(unlist(
   dlmSvd2var(DLM_data_filtered$U.R, 
              DLM_data_filtered$D.R)))
 
 
+# Plot
 gg_DLM <- ggplot(DLM_data) +
   geom_line(aes(y = yt, x = time), 
             linetype = "dashed",
@@ -65,6 +70,7 @@ gg_DLM <- ggplot(DLM_data) +
 gg_DLM
 
 
+# Print values of interest
 a40 <- DLM_data$pred[40]
 R40 <- DLM_data$pSE[40]^2
 
@@ -77,11 +83,13 @@ Using the process above, we find $a_{40} = `r a40`$ and $R_{40} = `r R40`$
 
 ### Part (b)
 
-```{r}
-
+```{r message=FALSE, warning=FALSE}
+# Find predictors of yt
 DLM_data$ft <- DLM_data$pred * Ft
 DLM_data$Qt <- Ft*DLM_data$pSE^2*t(Ft) + sigma2nu
 
+
+# Plot
 ggplot(DLM_data) +
   geom_line(aes(y = yt, x = time), 
             linetype = "dashed",
@@ -97,23 +105,29 @@ ggplot(DLM_data) +
   ylab(NULL) +
   theme_bw()
 
+
+# Print values of interest
 f40 <- Ft*a40
-Q40 <- Ft*R40*t(Ft) + sigma2nu
+Q40 <- DLM_data$Qt[40]
 
 f40
-DLM_data$Qt[40]
+Q40
 
 ```
 
+We find the value of $f_{40} = `r f40`$ and $Q_{40} = `r Q40`$
+
 ### Part (c)
 
-```{r}
-
+```{r message=FALSE, warning=FALSE}
+# Collect filtered values
 DLM_data$filtered <- dropFirst(DLM_data_filtered$m)
 DLM_data$fSE <- dropFirst(sqrt(unlist(
   dlmSvd2var(DLM_data_filtered$U.C, 
              DLM_data_filtered$D.C))))
 
+
+# Plot
 ggplot(DLM_data) +
   geom_line(aes(y = yt, x = time), 
             linetype = "dashed",
@@ -130,6 +144,7 @@ ggplot(DLM_data) +
   theme_bw()
 
 
+# Print values of interest
 m40 <- DLM_data$filtered[40]
 C40 <- DLM_data$fSE[40]^2
 
@@ -137,6 +152,8 @@ m40
 C40
 
 ```
+
+We find $m_{40} = `r m40`$ and $C_{40} = `r C40`$
 
 ### Part (d)
 
@@ -168,12 +185,15 @@ Now that we have found this expression analytically, though the question states 
 
 ### Part (e)
 ```{r}
+# Collect smoothed data
 DLM_data_smoothed <- dlmSmooth(DLM_data_filtered)
 DLM_data$smoothed <- dropFirst(DLM_data_smoothed$s)
 DLM_data$sSE <- dropFirst(sqrt(unlist(
   dlmSvd2var(DLM_data_smoothed$U.S, 
              DLM_data_smoothed$D.S))))
 
+
+# Plot
 ggplot(DLM_data) +
   geom_line(aes(y = yt, x = time), 
             linetype = "dashed",
@@ -189,44 +209,67 @@ ggplot(DLM_data) +
   ylab(NULL) +
   theme_bw()
 
+
 # Theta values at missing values of y:
 filled_holes <- cbind(which(is.na(DLM_data), arr.ind=F),DLM_data[which(is.na(DLM_data), arr.ind=F),c('yt', 'smoothed')])
 
+
+# Clean up column names
 colnames(filled_holes) <- c('row', 'yt', 'smoothed')
 
+# Print values of interest
 filled_holes
 
 ```
 
 
 ### Part (f)
-```{r}
-forecast_extension <- dlmForecast(DLM_data_filtered, nAhead = 50)
+```{r message=FALSE, warning=FALSE}
+# Run forecast
+forecast_extension <- dlmForecast(DLM_data_filtered, nAhead = 10)
+
+# Prepare real and forecasted data and combine
 pared_DLM_data <- DLM_data[,c('yt', 'time', 'Qt')]
-forecast_table <- data.frame(yt = forecast_extension$f,
-                                 time = seq(from = 101, to = 150),
-                                 Qt = unlist(forecast_extension$Q))
+pared_extension <- data.frame(yt = rep(NA, 10),
+                              time = seq(from = 101, to = 110),
+                              Qt = rep(NA, 10))
+pared_DLM_data <- rbind(pared_DLM_data, pared_extension)
+forecast_table <- data.frame(yt_forecast = forecast_extension$f,
+                                 time = seq(from = 101, to = 110),
+                                 Qt_forecast = unlist(forecast_extension$Q))
+
+combo_table <- left_join(pared_DLM_data, forecast_table)
 
 
-
-ggplot(pared_DLM_data) +
+# Plot
+ggplot(combo_table) +
   geom_line(aes(y = yt, x = time), 
             linetype = "dashed",
             color = "black") +
-  geom_line(data = forecast_table, aes(y = yt, x = time),
+  geom_line(aes(y = yt_forecast, x = time),
             color = "purple",
             size = 1.2) +
   geom_ribbon(aes(x = time,
-                  ymin = yt - 1.96 * sqrt(Qt),
-                  ymax = yt + 1.96 * sqrt(Qt)),
+                  ymin = yt_forecast - 1.96 * sqrt(Qt_forecast),
+                  ymax = yt_forecast + 1.96 * sqrt(Qt_forecast)),
                   fill = "purple",
               alpha = 0.2) +
   ylab(NULL) +
+  scale_x_continuous(limits = c(0,110),
+                     breaks = c(0,20,40,60,80,100,120),
+                     labels = c(0,20,40,60,80,100,120)) +
   theme_bw()
+
+
+# Print values of interest
+combo_table$Qt_forecast[101]
+combo_table$Qt_forecast[110]
 
 ```
 
+The value of $Q_{101} = `r combo_table$Qt_forecast[101]`$ and $Q_{110} = `r combo_table$Qt_forecast[110]`$
 
+The predictive variance at $Q_{101}$ is less than at $Q_{110}$ because $Q_{101}$ is closer in time to the real observed data, and thus is subject to less extrapolation.
 
 
 
