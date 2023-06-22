@@ -1,0 +1,128 @@
+---
+title: "Peer-Graded Time Series State-Space and Hidden Markov Models"
+output: html_document
+date: "2023-06-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(gridExtra)
+library(xts)
+library(depmixS4)
+library(dlm)
+library(gamlss.data)
+```
+
+### Part (a)
+```{r message=FALSE, warning=FALSE}
+# Collect data
+df <- data.frame(time = time(polio),
+                 count = as.matrix(polio))
+
+# Create model
+model <- depmix(count ~ 1,
+                  data = df,
+                  family = poisson(),
+                  nstates = 2,
+                  ntimes = nrow(df))
+
+# Fit model
+fit <- fit(model)
+fit
+
+# Add state column to original data
+df$state <- posterior(fit, type = "viterbi")$state
+
+# Plot
+ggplot(df,
+       aes(x = time, y = count)) +
+  geom_point(size = 1, color = "#56B4E9") +
+  geom_line(color = "#56B4E9") +
+  geom_text(aes(label = state, vjust = -1)) +
+  scale_y_continuous(limits = c(0,15))
+
+
+# Find Poisson parameters
+lambda1 <- exp(getpars(fit)[7])
+lambda2 <- exp(getpars(fit)[8])
+
+lambda1
+lambda2
+
+summary(fit)
+
+
+```
+We find the model AIC to be $530.0655$
+
+The value of $\lambda$ in state 1 is $\lambda_1 = 0.7902264$ and for state 2 is $\lambda_2 = 4.178249$
+
+The transition probability matrix is found to be:
+$$\Gamma(t) = \begin{bmatrix}
+0.932 & 0.068\\
+0.330 & 0.670
+\end{bmatrix}$$
+
+### Part (b)
+When the model encounters a high polio case count, it usually takes on state 2, which has a mean and variance of $\lambda_2 = 4.178249$, which is higher than state 1's $\lambda_1 = 0.7902264$
+
+We know that the probability mass function for a Poisson distribution is:
+$$P(X=x) = \frac{\lambda^k * e^{-\lambda}}{k!}$$
+
+For state 2:
+$$P(X=0) = \frac{\lambda^0 * e^{-\lambda}}{0!} = 0.015323$$
+Similarly, for state 2:
+$$P(X=1) = \frac{\lambda^1 * e^{-\lambda}}{1!} = 0.064033$$
+Thus, the probability that the state 2 distribution takes a value of 2 or greater is $1 - P(X=0) - P(X=1) = 1 - 0.015323 - 0.064033 = 0.920641$
+
+Thus it is much more likely that we observe two or more cases than that we observe no cases at all. This is consistent with general knowledge on infectious disease dynamic, as a greater number of infected individuals will tend to result in a greater number of infections in later time points.
+
+### Part (c)
+```{r message=FALSE, warning=FALSE}
+# Create model
+model <- depmix(count ~ 1,
+                  data = df,
+                  family = poisson(),
+                  nstates = 3,
+                  ntimes = nrow(df))
+
+# Fit model
+fit <- fit(model)
+fit
+
+# Add state column to original data
+df$state <- posterior(fit, type = "viterbi")$state
+
+# Plot
+ggplot(df,
+       aes(x = time, y = count)) +
+  geom_point(size = 1, color = "#D55E00") +
+  geom_line(color = "#D55E00") +
+  geom_text(aes(label = state, vjust = -1)) +
+  scale_y_continuous(limits = c(0,15))
+
+# Find Poisson parameters
+lambda1 <- exp(getpars(fit)[13])
+lambda2 <- exp(getpars(fit)[14])
+
+lambda1
+lambda2
+
+summary(fit)
+
+```
+
+We find the model AIC to be $529.9555$
+
+The value of $\lambda$ in state 1 is $\lambda_1 = 8.2571916$, for state 2 is $\lambda_2 = 0.6486635$, and for state 3 is $\lambda_2 = 2.2980627$
+
+The transition probability matrix is found to be:
+$$\Gamma(t) = \begin{bmatrix}
+0.280 & 0.106 & 0.614\\
+0.000 & 0.907 & 0.093\\
+0.091 & 0.213 & 0.695
+\end{bmatrix}$$
+
+
+
