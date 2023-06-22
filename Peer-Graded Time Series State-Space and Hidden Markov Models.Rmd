@@ -56,7 +56,7 @@ summary(fit)
 ```
 We find the model AIC to be $530.0655$
 
-The value of $\lambda$ in state 1 is $\lambda_1 = 0.7902264$ and for state 2 is $\lambda_2 = 4.178249$
+The value of $\lambda$ in state 1 is $\lambda_1 = `r lambda1`$ and for state 2 is $\lambda_2 = `r lambda2`$
 
 The transition probability matrix is found to be:
 $$\Gamma(t) = \begin{bmatrix}
@@ -105,9 +105,11 @@ ggplot(df,
 # Find Poisson parameters
 lambda1 <- exp(getpars(fit)[13])
 lambda2 <- exp(getpars(fit)[14])
+lambda3 <- exp(getpars(fit)[15])
 
 lambda1
 lambda2
+lambda3
 
 summary(fit)
 
@@ -115,7 +117,7 @@ summary(fit)
 
 We find the model AIC to be $529.9555$
 
-The value of $\lambda$ in state 1 is $\lambda_1 = 8.2571916$, for state 2 is $\lambda_2 = 0.6486635$, and for state 3 is $\lambda_2 = 2.2980627$
+The value of $\lambda$ in state 1 is $\lambda_1 = `r lambda1`$, for state 2 is $\lambda_2 = `r lambda2`$, and for state 3 is $\lambda_3 = `r lambda3`$
 
 The transition probability matrix is found to be:
 $$\Gamma(t) = \begin{bmatrix}
