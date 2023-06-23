@@ -63,7 +63,6 @@ gg_DLM <- ggplot(DLM_data) +
                   ymax = pred + 1.96 * pSE),
                   fill = "red",
               alpha = 0.2) +
-  ylab(NULL) +
   theme_bw() +
   ggtitle('One Step Ahead Predictions (State Given Observation)')
 
@@ -103,7 +102,6 @@ ggplot(DLM_data) +
                   ymax = ft + 1.96 * sqrt(Qt)),
                   fill = "blue",
               alpha = 0.2) +
-  ylab(NULL) +
   theme_bw() +
   ggtitle('One Step Ahead Predictions (Observation Given Observation)')
 
@@ -142,7 +140,6 @@ ggplot(DLM_data) +
                   ymax = filtered + 1.96 * fSE),
                   fill = "green",
               alpha = 0.2) +
-  ylab(NULL) +
   theme_bw() +
   ggtitle('Filtering Distribution')
 
@@ -208,7 +205,6 @@ ggplot(DLM_data) +
                   ymax = smoothed + 1.96 * sSE),
                   fill = "green",
               alpha = 0.2) +
-  ylab(NULL) +
   theme_bw() +
   ggtitle('Smoothing Distribution')
 
@@ -257,7 +253,6 @@ ggplot(combo_table) +
                   ymax = yt_forecast + 1.96 * sqrt(Qt_forecast)),
                   fill = "purple",
               alpha = 0.2) +
-  ylab(NULL) +
   scale_x_continuous(limits = c(0,110),
                      breaks = c(0,20,40,60,80,100,120),
                      labels = c(0,20,40,60,80,100,120)) +
