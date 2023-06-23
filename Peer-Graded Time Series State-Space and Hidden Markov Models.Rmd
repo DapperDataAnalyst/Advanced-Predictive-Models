@@ -26,6 +26,8 @@ model <- depmix(count ~ 1,
                   family = poisson(),
                   nstates = 2,
                   ntimes = nrow(df))
+set.seed(1)
+
 
 # Fit model
 fit <- fit(model)
@@ -65,6 +67,8 @@ $$\Gamma(t) = \begin{bmatrix}
 \end{bmatrix}$$
 
 ### Part (b)
+The estimate values of $\lambda$ represent both the mean and the variance of the Poisson distribution. In the context of this problem, a higher mean infection count corresponds to a higher variance of infection count.
+
 When the model encounters a high polio case count, it usually takes on state 2, which has a mean and variance of $\lambda_2 = 4.178249$, which is higher than state 1's $\lambda_1 = 0.7902264$
 
 We know that the probability mass function for a Poisson distribution is:
@@ -76,6 +80,8 @@ Similarly, for state 2:
 $$P(X=1) = \frac{\lambda^1 * e^{-\lambda}}{1!} = 0.064033$$
 Thus, the probability that the state 2 distribution takes a value of 2 or greater is $1 - P(X=0) - P(X=1) = 1 - 0.015323 - 0.064033 = 0.920641$
 
+Moreover, from the transition probability matrix, we know that when the model takes on state 2, it has a 0.67 probability of staying in state 2 at the next time point.
+
 Thus it is much more likely that we observe two or more cases than that we observe no cases at all. This is consistent with general knowledge on infectious disease dynamic, as a greater number of infected individuals will tend to result in a greater number of infections in later time points.
 
 ### Part (c)
@@ -86,6 +92,8 @@ model <- depmix(count ~ 1,
                   family = poisson(),
                   nstates = 3,
                   ntimes = nrow(df))
+set.seed(1)
+
 
 # Fit model
 fit <- fit(model)
@@ -121,9 +129,9 @@ The value of $\lambda$ in state 1 is $\lambda_1 = `r lambda1`$, for state 2 is $
 
 The transition probability matrix is found to be:
 $$\Gamma(t) = \begin{bmatrix}
-0.280 & 0.106 & 0.614\\
-0.000 & 0.907 & 0.093\\
-0.091 & 0.213 & 0.695
+0.907 & 0.000 & 0.093\\
+0.106 & 0.280 & 0.614\\
+0.213 & 0.091 & 0.695
 \end{bmatrix}$$
 
 
