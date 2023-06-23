@@ -64,7 +64,8 @@ gg_DLM <- ggplot(DLM_data) +
                   fill = "red",
               alpha = 0.2) +
   ylab(NULL) +
-  theme_bw()
+  theme_bw() +
+  ggtitle('One Step Ahead Predictions (State Given Observation)')
 
 
 gg_DLM
@@ -103,7 +104,8 @@ ggplot(DLM_data) +
                   fill = "blue",
               alpha = 0.2) +
   ylab(NULL) +
-  theme_bw()
+  theme_bw() +
+  ggtitle('One Step Ahead Predictions (Observation Given Observation)')
 
 
 # Print values of interest
@@ -141,8 +143,8 @@ ggplot(DLM_data) +
                   fill = "green",
               alpha = 0.2) +
   ylab(NULL) +
-  theme_bw()
-
+  theme_bw() +
+  ggtitle('Filtering Distribution')
 
 # Print values of interest
 m40 <- DLM_data$filtered[40]
@@ -207,7 +209,8 @@ ggplot(DLM_data) +
                   fill = "green",
               alpha = 0.2) +
   ylab(NULL) +
-  theme_bw()
+  theme_bw() +
+  ggtitle('Smoothing Distribution')
 
 
 # Theta values at missing values of y:
@@ -258,7 +261,8 @@ ggplot(combo_table) +
   scale_x_continuous(limits = c(0,110),
                      breaks = c(0,20,40,60,80,100,120),
                      labels = c(0,20,40,60,80,100,120)) +
-  theme_bw()
+  theme_bw() +
+  ggtitle('DLM Forecast')
 
 
 # Print values of interest
