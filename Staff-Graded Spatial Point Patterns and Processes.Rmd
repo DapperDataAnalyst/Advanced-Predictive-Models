@@ -1,0 +1,87 @@
+---
+title: "Staff-Graded: Spatial Point Patterns and Processes"
+output: html_document
+date: "2023-06-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(spatstat)
+library(sf)
+library(sp)
+library(rgdal)
+library(ggmap)
+
+latlong <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/chi_markets.csv')
+load("C:/Users/TXRW24/Downloads/chi_supermarkets_ppp.Rdata")
+```
+
+### Part (a)
+```{r message=FALSE, warning=FALSE}
+
+# Create a SpatialPoints object with latitude and longitude coordinates
+points <- SpatialPoints(latlong, proj4string = CRS("+proj=longlat +datum=WGS84"))
+
+# Define UTM coord system
+utm_crs <- CRS("+proj=utm +zone=16 +datum=WGS84")
+
+# Convert latlong to UTM
+points_utm <- spTransform(points, utm_crs)
+
+# Pull out x and y components and put in clean dataframe
+utm_x <- coordinates(points_utm)[, 1]
+utm_y <- coordinates(points_utm)[, 2]
+utm_coords <- data.frame(x = utm_x,
+                         y = utm_y)
+
+# Go back to using lat/long coords
+# Specify the lat/long coordinates of the map area
+map_area <- c(left = min(latlong$lon), bottom = min(latlong$lat), right = max(latlong$lon), top = max(latlong$lat))
+map <- get_stamenmap(bbox = map_area, maptype = "toner-lite")
+
+# Plot
+ggmap(map) +
+  geom_point(data = latlong, aes(x = lon, y = lat), color = "red", size = 1) +
+  xlab(NULL) +
+  ylab(NULL) +
+  ggtitle('Market locations in Chicago area')
+
+
+```
+
+The top right corner of the rectangle is open water, not buildable land.
+
+
+### Part (b)
+```{r}
+plot(markets_ppp, main = 'Markets in the Chicago area')
+
+
+```
+
+This spatial pattern appears to exhibit clustering, as many markets are located near the eastern border of the defined region, especially in the northern half of the defined region. Additionally, the intensity of the spatial events does not appear to be constant over time.
+
+
+### Part (c)
+```{r message=FALSE, warning=FALSE}
+model <- ppm(markets_ppp, ~ polynom(x, y, 2))
+
+plot(model, 
+     how = "image", 
+     se = FALSE, 
+     col = grey(seq(1,0,length=100)))
+
+
+model$coef
+
+intensity_point <- predict(model, locations = data.frame(x = 443674, y = 4636999))
+
+intensity_point
+
+```
+
+The intercept of the estimated log intensity function is UTM coordinate -31,400
+
+The value of the intensity function at (x = 443674, y = 4636999) is $7.705 * 10^{-7}$, which is very nearly zero.
+
+
