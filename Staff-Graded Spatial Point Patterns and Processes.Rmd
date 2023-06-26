@@ -7,9 +7,7 @@ date: "2023-06-30"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(spatstat)
-library(sf)
 library(sp)
-library(rgdal)
 library(ggmap)
 
 latlong <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/chi_markets.csv')
