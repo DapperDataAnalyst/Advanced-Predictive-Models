@@ -7,11 +7,13 @@ date: "2023-06-30"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(spatstat)
+library(sf)
 library(sp)
+library(rgdal)
 library(ggmap)
 
 latlong <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/chi_markets.csv')
-load("C:/Users/TXRW24/Downloads/chi_supermarkets_ppp.Rdata")
+load("chi_supermarkets_ppp.Rdata")
 ```
 
 ### Part (a)
@@ -80,6 +82,6 @@ intensity_point
 
 The intercept of the estimated log intensity function is UTM coordinate -31,400
 
-The value of the intensity function at (x = 443674, y = 4636999) is $7.705 * 10^{-7}$, which is very nearly zero.
+The value of the intensity function at (x = 443674, y = 4636999) is $7.705 * 10^{-7}$.
 
 
