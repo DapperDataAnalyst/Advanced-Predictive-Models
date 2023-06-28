@@ -1,0 +1,140 @@
+---
+title: "Peer-Graded Spatial Point Patterns and Processes"
+output: html_document
+date: "2023-06-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readr)
+library(spatstat)
+library(sf)
+library(sp)
+library(rgdal)
+library(ggmap)
+library(tidyverse)
+library(geosphere)
+
+
+raw_crime <- read_csv("crime.csv")
+
+
+
+```
+
+### Part (a)
+
+These data come from the Boston Police Department, and they record crime incidents from the Department's then-new reporting system. This dataset comes from Kaggle and can be found at the link here: https://www.kaggle.com/datasets/ankkur13/boston-crime-data
+
+The dataset contains 327,820 records and 17 fields, with fields including the latitude and longitude of a reported offense, the date and time the incident was reported, the type of alleged crime, and the Department's unique offence code assigned to each record.
+
+For this analysis, we clean the data of missing latitude and longitude coordinates and filter to the year 2018 so as to obtain a reasonably small record count.
+
+```{r message=FALSE, warning=FALSE}
+crime <- raw_crime %>% 
+  # Remove rows where lat/long is missing
+  filter(!is.na(raw_crime$Long) & !is.na(raw_crime$Lat)) %>%
+  # Remove junk lat/long readings
+  filter(Lat > 30 & Long < -10) %>%
+  # Filter to 2017-2018
+  filter(YEAR == 2018) %>%
+  # Filter to only vandalism
+  filter(OFFENSE_CODE_GROUP == 'Auto Theft')
+
+latlong <- data.frame(long = crime$Long,
+                      lat = crime$Lat)
+
+# Set window bounds
+buffer <- 0.01
+left_bound <- min(latlong$long) - buffer
+right_bound <- max(latlong$long) + buffer
+bottom_bound <- min(latlong$lat) - buffer
+top_bound <- max(latlong$lat) + buffer
+
+head(crime)
+
+points <- SpatialPoints(latlong, proj4string = CRS("+proj=longlat +datum=WGS84"))
+
+map_area <- c(left = left_bound, bottom = bottom_bound, right = right_bound, top = top_bound)
+
+map <- get_stamenmap(bbox = map_area, maptype = "toner-lite")
+
+# Plot
+ggmap(map) +
+  geom_point(data = latlong, aes(x = long, y = lat), color = "red", size = 0.6) +
+  xlab(NULL) +
+  ylab(NULL)
+
+```
+
+### Part (b)
+
+The data are an SPP because they contain information (latitude and longitude) describing the location of each reported incident, and the reported incidents are stochastically distributed in space insofar as human behavior is not deterministic.
+
+### Part (c)
+
+From a cursory visual inspection, the plotted points do appear to exhibit clustering. Thus, we may already begin to suspect that this is not a homogeneous Poisson process. We will use statistical methods to formally test this suspicion.
+
+```{r message=FALSE, warning=FALSE}
+ppp_obj <- ppp(x = latlong$long, y = latlong$lat, window = owin(xrange = range(latlong$long), yrange = range(latlong$lat)))
+
+nx <- 6
+ny <- 3
+Q <- quadratcount(ppp_obj, 
+                  nx = nx, 
+                  ny = ny)
+
+plot(ppp_obj, 
+     cex = 0.5, 
+     pch = "+", 
+     main="Tree Locations")
+plot(Q, 
+     add = TRUE, 
+     cex = 2)
+
+# Find area of observation region, in miles
+# Find width
+lat1 <- bottom_bound
+lon1 <- mean(latlong$long)
+lat2 <- top_bound
+lon2 <- mean(latlong$long)
+
+region_width <- distGeo(c(lon1, lat1), c(lon2, lat2)) * 0.0006213712
+
+# Find height
+lat1 <- mean(latlong$lat)
+lon1 <- left_bound
+lat2 <- mean(latlong$lat)
+lon2 <- right_bound
+
+region_height <- distGeo(c(lon1, lat1), c(lon2, lat2)) * 0.0006213712
+
+# Find square mileage of observation region
+region_area <- region_height * region_width
+
+region_area
+
+
+# Perform F test
+ppp.quadtest <- quadrat.test(ppp_obj, 
+                             nx = nx, 
+                             ny = ny)
+ppp.quadtest
+
+
+
+
+```
+
+The actual event counts in each quadrant are shown in the plot. Our observation area is approximately `r region_area` square miles. We observe `r nrow(latlong)` events over that area, giving us an estimated parameter $\hat{\lambda}$ as follows:
+$$\hat{\lambda} = N/|D| = `r nrow(latlong)`/`r region_area` = `r nrow(latlong) / region_area`$$
+Thus we would expect to see `r nrow(latlong) / region_area` events per square mile.
+
+Our quadrant plot breaks the observation region into `r nx*ny` quadrants. Thus each quadrant has an area of approximately $`r region_area` / `r (nx*ny)` = `r region_area / (nx*ny)`$ square miles.
+
+Since we have found an expected event count of `r nrow(latlong) / region_area` events per square mile, then in expectation each quadrant has $`r nrow(latlong) / region_area` * `r region_area / (nx*ny)` = `r (nrow(latlong) / region_area) * (region_area / (nx*ny))`$ observed events.
+
+For the chi-square test, the p-value is minuscule, indicating that we can comfortably reject the null hypothesis that this SPP is homogeneous Poisson.
+
+
