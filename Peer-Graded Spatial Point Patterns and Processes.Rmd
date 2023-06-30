@@ -88,7 +88,7 @@ Q <- quadratcount(ppp_obj,
 plot(ppp_obj, 
      cex = 0.5, 
      pch = "+", 
-     main="Tree Locations")
+     main="Incident Locations")
 plot(Q, 
      add = TRUE, 
      cex = 2)
