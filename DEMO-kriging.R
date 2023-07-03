@@ -14,7 +14,8 @@ library(leaflet)
 library(gridExtra)
 
 # load scallops data
-scallops <- read.table("scallops.txt",header=T)
+#scallops <- read.table("scallops.txt",header=T)
+scallops <- readr::read_table('https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/scallops.txt')
 
 # take the log tranformation of the 
 # total catch counts
