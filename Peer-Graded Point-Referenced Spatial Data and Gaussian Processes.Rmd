@@ -134,7 +134,7 @@ Because we are dealing in only two dimensions. In two dimensions, a maximum of t
 
 
 ### Part (f)
-```{r}
+```{r message=FALSE, warning=FALSE}
 rain_geo <- as.geodata(
   cbind(rain$x,
         rain$y,
@@ -150,11 +150,46 @@ fit <- likfit(
   cov.model = "exponential",
   ini.cov.pars = c(5, .01),
   fix.nugget=T, 
-  nugget=0)
+  nugget=0,
+  trend = as.formula(~covar1,rain_geo))
+
+fit$parameters.summary
+```
+
+From the outputted table, we find that $\beta_0 = `r fit$parameters.summary[1,2]`$, $\beta_1 = `r fit$parameters.summary[2,2]`$, $\sigma^2 = `r fit$parameters.summary[4,2]`$, and $\phi = `r fit$parameters.summary[5,2]`$
+
+
+### Part (g)
+```{r message=FALSE, warning=FALSE}
+likfit_resids <- fit$model.components$residuals
+combinations$likfit_resid_row <- likfit_resids[combinations$row]
+combinations$likfit_resid_col <- likfit_resids[combinations$col]
+
+likfit_correlations <- combinations %>%
+  group_by(category) %>%
+  summarise(correlation = cor(likfit_resid_row, likfit_resid_col), count = n())
+
+likfit_correlations <- likfit_correlations %>%
+  left_join(bins_and_centers) %>% unique()
+
+ggCorr + geom_line(data = likfit_correlations, aes(x = bin_center, y = correlation),
+                   linewidth = 1,
+                   color = '#AAAAAA')
+
 ```
 
 
+### Part (h)
+```{r message=FALSE, warning=FALSE}
+summary(fit)
+```
+
+From this summary of the models, we find that the non-spatial AIC is $578.3$ and the spatial AIC is $503.5$
+
+A lower AIC value indicates better model fit, and so the spatial model is a better fit to the data than the non-spatial.
 
 
+### Part (i)
+We would also require information on an unmonitored location's altitude, as rainfall is correlated to altitude. In the kriging demo, there was no covariate for scallop catch size analogous to what we have here with altitude being a covariate to rainfall amount.
 
 
