@@ -1,0 +1,160 @@
+---
+title: "Peer-Graded Point-Referenced Spatial Data and Gaussian Processes"
+output: html_document
+date: "2023-07-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(mapproj)
+library(geoR)
+library(leaflet)
+library(gridExtra)
+library(stringr)
+
+rain <- readr::read_table('https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/rain.txt')
+
+```
+
+### Part (a)
+```{r}
+# Convert altitude from feet to miles
+# There are 5,280 feet per mile
+rain$altitude <- rain$altitude * (1/5280)
+
+# Plot rainfall and altitude
+rain_alt_plot <- ggplot(data = rain, aes(x = x, y = y)) + 
+   geom_point(aes(size = rainfall, color = altitude)) +
+  ggtitle('Rainfall & Altitude by Longitude & Latitude')
+
+
+rain_alt_plot
+
+```
+
+There does appear to be spatial dependence between altitude and rainfall amounts. This can be seen most clearly in the plot around x = 300, where the points are small in diameter and light in color. This indicates a small rainfall amount and a high altitude, respectively. From this exploratory analysis, we may form the preliminary impression that high altitudes see rather little rainfall compared to lower altitudes.
+
+
+### Part (b)
+```{r}
+# Fit a linear regression model using lm()
+model <- lm(sqrt(rainfall) ~ altitude, data = rain)
+
+# Extract the estimated parameter values
+coefficients <- coef(model)
+
+# Extract the R-squared value
+r_squared <- summary(model)$r.squared
+
+# Extract the estimated error variance
+error_variance <- summary(model)$sigma^2
+
+coefficients
+r_squared
+error_variance
+
+```
+The estimated regression function in the form $y = \beta_0 + \beta_1 x + \epsilon$ is as follows:
+$$y = `r coefficients[1]` + (`r coefficients[2]`) x + \epsilon$$
+
+The estimated error variance is `r error_variance`
+
+The model yields an $R^2$ of `r r_squared`, indicating that `r r_squared * 100` percent of the variation in the square root of rainfall is explained by altitude.
+
+
+### Part (c)
+```{r}
+# Find distances between points in each pair
+distances <- dist(rain[,1:2])
+
+# Convert distances to a data frame so it can be fed to ggplot
+dist_df <- data.frame(Distance = as.vector(distances))
+
+# Make histogram
+histo <- ggplot(dist_df, aes(x = Distance, y = ..count../sum(..count..))) +
+  geom_histogram(binwidth = 20,
+                 center = 10,
+                 fill = '#009E73', color = 'black') +
+  scale_x_continuous(breaks = seq(from = 0, to = 300, by = 20),
+                     labels = seq(from = 0, to = 300, by = 20)) +
+  labs(x = "Distance", y = "Frequency", title = "Euclidean Distance Histogram") +
+  theme_bw()
+
+histo
+
+```
+
+### Part (d)
+```{r message=FALSE, warning=FALSE}
+rain$resid <- model$residuals
+
+dist_matrix <- as.matrix(distances)
+dist_matrix[upper.tri(dist_matrix)] <- 0
+
+
+# Get all combinations of elements from vec1 and vec2
+combinations <- as.data.frame(which(dist_matrix != 0, arr.ind = T))
+
+combinations <- cbind(combinations,dist_df)
+
+combinations$resid_row <- rain$resid[combinations$row]
+combinations$resid_col <- rain$resid[combinations$col]
+combinations$category <- cut(combinations$Distance,
+                             breaks = seq(from = 0, to = 300, by = 20),
+                             labels = c("[0,20)", "[20,40)", "[40,60)", "[60,80)", "[80,100)", "[100,120)", "[120,140)", "[140,160)", "[160,180)", "[180,200)", "[200,220)", "[220,240)", "[240,260)", "[260,280)", "[280,300)"),
+                             include.lowest = TRUE)
+
+combinations$bin_center <- floor(combinations$Distance / 20) * 20 + 20/2
+
+correlations <- combinations %>%
+  group_by(category) %>%
+  summarise(correlation = cor(resid_row, resid_col), count = n())
+
+bins_and_centers <- combinations %>% select(category, bin_center)
+
+correlations <- correlations %>%
+  left_join(bins_and_centers) %>% unique()
+
+ggCorr <- ggplot(correlations, aes(x = bin_center, y = correlation)) +
+  geom_point(aes(size = count, color = count)) +
+  labs(x = "Bin Center", y = "Correlation", title = "Correlation Coefficient by Bin Center") +
+  scale_color_viridis_c() +
+  theme_bw()
+
+ggCorr
+
+
+```
+
+
+### Part (e)
+Because we are dealing in only two dimensions. In two dimensions, a maximum of three points can be placed equidistant to one another, at the vertices of an equilateral triangle. Maintaining equidistance with more than three points requires more than two dimensions. In two dimensions, adding more than three points requires that some pairwise distances be shorter than others, and that the shorter distances be more numerous than the longer distances.
+
+
+### Part (f)
+```{r}
+rain_geo <- as.geodata(
+  cbind(rain$x,
+        rain$y,
+        sqrt(rain$rainfall),
+        rain$altitude),
+  coords.col = 1:2,
+  data.col = 3,
+  covar.col = 4
+)
+
+fit <- likfit(
+  rain_geo,
+  cov.model = "exponential",
+  ini.cov.pars = c(5, .01),
+  fix.nugget=T, 
+  nugget=0)
+```
+
+
+
+
+
+
