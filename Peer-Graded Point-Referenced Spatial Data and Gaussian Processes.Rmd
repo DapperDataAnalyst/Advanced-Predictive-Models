@@ -27,7 +27,8 @@ rain$altitude <- rain$altitude * (1/5280)
 # Plot rainfall and altitude
 rain_alt_plot <- ggplot(data = rain, aes(x = x, y = y)) + 
    geom_point(aes(size = rainfall, color = altitude)) +
-  ggtitle('Rainfall & Altitude by Longitude & Latitude')
+  ggtitle('Rainfall & Altitude by Longitude & Latitude') +
+  theme_bw()
 
 
 rain_alt_plot
@@ -174,7 +175,8 @@ likfit_correlations <- likfit_correlations %>%
 
 ggCorr + geom_line(data = likfit_correlations, aes(x = bin_center, y = correlation),
                    linewidth = 1,
-                   color = '#AAAAAA')
+                   color = '#AAAAAA') +
+  ggtitle('Correlation Coefficient & LikFit Correlation by Bin Center')
 
 ```
 
