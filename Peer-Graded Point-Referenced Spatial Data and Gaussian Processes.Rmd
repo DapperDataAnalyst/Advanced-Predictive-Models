@@ -166,14 +166,10 @@ likfit_resids <- fit$model.components$residuals
 combinations$likfit_resid_row <- likfit_resids[combinations$row]
 combinations$likfit_resid_col <- likfit_resids[combinations$col]
 
-likfit_correlations <- combinations %>%
-  group_by(category) %>%
-  summarise(correlation = cor(likfit_resid_row, likfit_resid_col), count = n())
+likfit_correlations <- data.frame(x = seq(from = 1, to = 300, by = 1),
+                                  y =exp(-(seq(from = 1, to = 300, by = 1) / fit$cov.pars[2])))
 
-likfit_correlations <- likfit_correlations %>%
-  left_join(bins_and_centers) %>% unique()
-
-ggCorr + geom_line(data = likfit_correlations, aes(x = bin_center, y = correlation),
+ggCorr + geom_line(data = likfit_correlations, aes(x = x, y = y),
                    linewidth = 1,
                    color = '#AAAAAA') +
   ggtitle('Correlation Coefficient & LikFit Correlation by Bin Center')
