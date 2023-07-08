@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.sparse import csr_matrix
 import time
 
 # Part (a) ============================================================================================
@@ -50,16 +51,25 @@ print(end - start)
 
 # Part (d) ============================================================================================
 # Set values greater than 50 to zero
-matrix[matrix > 50] = 0
+mod_matrix = matrix
+mod_matrix[mod_matrix > 50] = 0
 
 # Set NAs to zero
-matrix = np.nan_to_num(matrix)
+mod_matrix = np.nan_to_num(mod_matrix)
 
 start = time.time()
-np.sum(matrix)
+np.sum(mod_matrix)
 end = time.time()
 print(end - start)
 
+
+# Part (e) ============================================================================================
+sparse_matrix = csr_matrix(matrix)
+
+start = time.time()
+np.sum(sparse_matrix)
+end = time.time()
+print(end - start)
 
 
 
