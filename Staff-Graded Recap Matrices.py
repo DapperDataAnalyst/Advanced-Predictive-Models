@@ -1,10 +1,12 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 import time
+import pandas as pd
 
 # Part (a) ============================================================================================
 # Read the CSV file
 data = np.genfromtxt('TexasCityDistanceMatrix.csv', delimiter=',')
+key = pd.read_csv('TexasCityKey.csv', encoding = "ISO-8859-1")
 
 # Drop the first row and column
 matrix = data[1:, 1:]
@@ -18,15 +20,18 @@ print(max_value)
 # Note that the row and column headers have been removed, and thus Katy is the 750th row in the matrix
 # in its current form
 
-# Find row of interest
-row_values = matrix[749, :]
+# Specify the row index
+row_index = 749
 
-# Remove zeroes
-nonzero_values = row_values[row_values != 0]
+# Find the column index of the lowest non-zero value that is not NaN in the specified row
+row_values = matrix[row_index]
+nonzero_indices = np.where((row_values != 0) & (~np.isnan(row_values)))[0]
 
-# Find mins
-min_nonzeroes = np.nanmin(nonzero_values)
-print(min_nonzeroes)
+min_index = np.argmin(row_values[nonzero_indices])
+column_index = nonzero_indices[min_index]
+
+print(f"Column index of the lowest non-zero value in row {row_index} is {column_index}")
+print(key.iloc[column_index,1])
 
 
 # Find locations within 25 miles of Flower Mound
@@ -70,11 +75,3 @@ start = time.time()
 np.sum(sparse_matrix)
 end = time.time()
 print(end - start)
-
-
-
-
-
-
-
-
