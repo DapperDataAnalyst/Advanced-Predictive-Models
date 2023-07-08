@@ -75,3 +75,4 @@ start = time.time()
 np.sum(sparse_matrix)
 end = time.time()
 print(end - start)
+
