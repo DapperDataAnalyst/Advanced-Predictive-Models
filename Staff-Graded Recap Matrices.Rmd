@@ -1,0 +1,113 @@
+---
+title: "Staff-Graded Recap Matrices"
+output: html_document
+date: "2023-07-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+py_install("scipy")
+```
+
+### Part (a)
+```{python}
+import numpy as np
+from scipy.sparse import csr_matrix
+import time
+
+
+# Read the CSV file
+data = np.genfromtxt('TexasCityDistanceMatrix.csv', delimiter=',')
+
+# Drop the first row and column
+matrix = data[1:, 1:]
+
+# Find the maximum value ignoring NaN
+max_value = np.nanmax(matrix)
+print(max_value)
+
+```
+
+The maximum value in the matrix is 99.9997. This seems to indicate that the NA values in the matrix represent values of 100 or greater.
+
+
+### Part (b)
+```{python}
+# Note that the row and column headers have been removed, and thus Katy is the 750th row in the matrix
+# in its current form
+
+# Find row of interest
+row_values = matrix[749, :]
+
+# Remove zeroes
+nonzero_values = row_values[row_values != 0]
+
+# Find mins
+min_nonzeroes = np.nanmin(nonzero_values)
+print(min_nonzeroes)
+
+
+# Find locations within 25 miles of Flower Mound
+# Flower Mound is the 507th row in the matrix
+# Find row of interest
+row_values = matrix[506, :]
+
+# Remove zeroes
+nonzero_values = row_values[row_values != 0]
+
+# Find values less than 25
+values = nonzero_values[nonzero_values <= 25]
+print(len(values))
+
+```
+
+The closest location to Katy is 5.337 miles away.
+
+There are 75 locations within 25 miles of Flower Mound.
+
+
+### Part (c)
+```{python, echo = FALSE}
+start = time.time()
+np.sum(matrix)
+end = time.time()
+print(end - start)
+```
+
+On my machine and depending on the run, this operation takes approximately 0.03 seconds.
+
+
+### Part (d)
+```{python}
+# Set values greater than 50 to zero
+matrix[matrix > 50] = 0
+
+# Set NAs to zero
+matrix = np.nan_to_num(matrix)
+
+start = time.time()
+np.sum(matrix)
+end = time.time()
+print(end - start)
+```
+
+On my machine and depending on the run, this operation takes approximately 0.052 seconds.
+
+
+### Part (d)
+```{python}
+sparse_matrix = csr_matrix(matrix)
+
+start = time.time()
+np.sum(sparse_matrix)
+end = time.time()
+print(end - start)
+
+```
+
+On my machine and depending on the run, this operation takes approximately 0.05 seconds.
+
+
+### Part (e)
+Knowing that the matrix is symmetric and has zeroes on the diagonal, we could save space by storing the matrix in some data structure other than a NumPy array. For the left triangle of the matrix, for non-zero elements, we could store the element value and row-column index pair. It would then be implicit that all elements mirrored across the diagonal are equal. In other words, element (j,i) equals element (i,j). It would also be implicit that index pairs not specifically associated with a non-zero element value are zero. In essence, we do not need to store these zero elements at all, as they can be reintroduced at a later time if needed.
