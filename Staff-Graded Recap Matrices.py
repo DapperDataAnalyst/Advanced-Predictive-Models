@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.sparse
 from scipy.sparse import csr_matrix
 import time
 import pandas as pd
