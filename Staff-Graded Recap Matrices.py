@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.sparse
 from scipy.sparse import csr_matrix
 import time
 import pandas as pd
@@ -70,7 +69,7 @@ print(end - start)
 
 
 # Part (e) ============================================================================================
-sparse_matrix = scipy.sparse.csr_matrix(matrix)
+sparse_matrix = csr_matrix(matrix)
 
 start = time.time()
 sparse_matrix.sum()
