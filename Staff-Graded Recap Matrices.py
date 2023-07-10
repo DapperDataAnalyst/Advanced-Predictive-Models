@@ -69,10 +69,9 @@ print(end - start)
 
 
 # Part (e) ============================================================================================
-sparse_matrix = scipy.sparse.csr_matrix(matrix)
+sparse_matrix = csr_matrix(matrix)
 
 start = time.time()
 sparse_matrix.sum()
 end = time.time()
 print(end - start)
-
