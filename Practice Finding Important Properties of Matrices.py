@@ -2,7 +2,8 @@ import numpy as np
 
 # Q1 --------------------------------------------------------------------------------------------------
 # Create a matrix
-matrix = np.array([[6,5], [3,4]])
+matrix = np.array([[6,5],
+                   [3,4]])
 
 # Find eigenvalues and eigenvectors
 eigenvalues, eigenvectors = np.linalg.eig(matrix)
