@@ -32,7 +32,8 @@ print(test)
 
 # Q2 --------------------------------------------------------------------------------------------------
 # Create a matrix
-matrix = np.array([[4,-8], [-2,4]])
+matrix = np.array([[4,-8],
+                   [-2,4]])
 
 # Find eigenvalues and eigenvectors
 eigenvalues, eigenvectors = np.linalg.eig(matrix)
@@ -57,7 +58,8 @@ print(test)
 
 # Q3 --------------------------------------------------------------------------------------------------
 # Create a matrix
-matrix = np.array([[1,0], [0,1]])
+matrix = np.array([[1,0],
+                   [0,1]])
 
 # Find eigenvalues and eigenvectors
 eigenvalues, eigenvectors = np.linalg.eig(matrix)
@@ -88,7 +90,8 @@ print(test)
 
 # Q4 --------------------------------------------------------------------------------------------------
 # Create a matrix
-matrix = np.array([[1,0], [0,2]])
+matrix = np.array([[1,0],
+                   [0,2]])
 
 # Find eigenvalues and eigenvectors
 eigenvalues, eigenvectors = np.linalg.eig(matrix)
