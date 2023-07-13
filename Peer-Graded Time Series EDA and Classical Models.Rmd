@@ -14,42 +14,37 @@ library(xts)
 library(lubridate)
 library(stats)
 
-ARMAdata1 <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/ARMAData1.csv')
+ARMAdata1 <- readr::read_csv("https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/ARMAData1.csv")
 
-ARMAdata2 <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/ARMAData2.csv')
+ARMAdata2 <- readr::read_csv("https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/ARMAData2.csv")
 
-accidents <- readr::read_csv('https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/TexasAccidents.csv')
-
+accidents <- readr::read_csv("https://raw.githubusercontent.com/DapperDataAnalyst/Advanced_Predictive_Models/main/TexasAccidents.csv")
 ```
 
 ## Question 1
 ### Part (a)
 ```{r Q1a, message=FALSE, warning=FALSE}
-
-
 order_count <- 3
-fit_objects <- matrix(rep(0,order_count), nrow = order_count, ncol = order_count)
+fit_objects <- matrix(rep(0, order_count), nrow = order_count, ncol = order_count)
 
 # Iterate over various p, q combos and fit model for each
-for (p in 1:3){
-  for (q in 1:3){
+for (p in 1:3) {
+  for (q in 1:3) {
     fit <- sarima(ARMAdata1$x,
-                  p = p, 
-                  d = 0, 
-                  q = q, 
-                  no.constant = TRUE,
-                  details = FALSE)
-    
+      p = p,
+      d = 0,
+      q = q,
+      no.constant = TRUE,
+      details = FALSE
+    )
+
     # Capture each model's AICc
-    fit_objects[p,q] <- fit$AICc
-    
+    fit_objects[p, q] <- fit$AICc
   }
 }
 
-fit_objects[2,2] <- 0 # Remove (p=2, q=2) case
+fit_objects[2, 2] <- 0 # Remove (p=2, q=2) case
 fit_objects
-
-
 ```
 From this analysis, ARMA(p=3, q=1) yields the lowest AICc value, and is thus the best.
 
@@ -57,12 +52,12 @@ From this analysis, ARMA(p=3, q=1) yields the lowest AICc value, and is thus the
 ### Part (b)
 ```{r Q1b}
 sarima(ARMAdata1$x,
-                  p = 3, 
-                  d = 0, 
-                  q = 1, 
-                  no.constant = TRUE,
-                  details = FALSE)
-
+  p = 3,
+  d = 0,
+  q = 1,
+  no.constant = TRUE,
+  details = FALSE
+)
 ```
 
 From the output shown above, our ARMA model is as follows:
@@ -72,79 +67,99 @@ Here, the estimated value of $\sigma^2_w = 1.028$. Thus $w_t \sim N(0, 1.028)$
 
 ### Part (c)
 ```{r Q1c, message=FALSE, warning=FALSE}
-
-n_train = 150
+n_train <- 150
 
 # Slice original data to get training data
-ARMAdata2_train <- ARMAdata2[1:n_train,]
+ARMAdata2_train <- ARMAdata2[1:n_train, ]
 
 # Fit ARIMA on training data
 fit <- sarima(ARMAdata2_train$x,
-                  p = 2, 
-                  d = 0, 
-                  q = 2, 
-                  no.constant = TRUE,
-                  details = FALSE)
+  p = 2,
+  d = 0,
+  q = 2,
+  no.constant = TRUE,
+  details = FALSE
+)
 
 fit
-
 ```
 The resulting AICc value is `r fit$AICc`
 
 ### Part (d)
 ```{r Q1d}
-
-
 n <- nrow(ARMAdata2)
 fit_train <- sarima(ARMAdata2_train$x,
-              p = 2, 
-              d = 0, 
-              q = 2, 
-              no.constant = TRUE,
-              details = FALSE)
+  p = 2,
+  d = 0,
+  q = 2,
+  no.constant = TRUE,
+  details = FALSE
+)
 
 # Run ARIMA forecast
-fit_for <- sarima.for(ARMAdata2_train$x, 
-                      n.ahead = n - n_train, 
-                      p = 2, 
-                      d = 0, 
-                      q = 2,
-                      plot = F)
+fit_for <- sarima.for(ARMAdata2_train$x,
+  n.ahead = n - n_train,
+  p = 2,
+  d = 0,
+  q = 2,
+  plot = F
+)
 
 # Prepare data for graphing
 fit_data <- bind_rows(
-  data.frame(Time = 1:n,
-             Type = factor(rep("Given Data", n),
-                              levels = c("Given Data",
-                                         "Pred")),
-             x = as.numeric(ARMAdata2$x)),
-  data.frame(Time = 1:n,
-             Type = factor(rep("Pred", n),
-                              levels = c("Given Data",
-                                         "Pred")),
-             x = c(as.numeric(ARMAdata2_train$x) - 
-                     as.numeric(resid(fit_train$fit)), 
-                   as.numeric(fit_for$pred))))
+  data.frame(
+    Time = 1:n,
+    Type = factor(rep("Given Data", n),
+      levels = c(
+        "Given Data",
+        "Pred"
+      )
+    ),
+    x = as.numeric(ARMAdata2$x)
+  ),
+  data.frame(
+    Time = 1:n,
+    Type = factor(rep("Pred", n),
+      levels = c(
+        "Given Data",
+        "Pred"
+      )
+    ),
+    x = c(
+      as.numeric(ARMAdata2_train$x) -
+        as.numeric(resid(fit_train$fit)),
+      as.numeric(fit_for$pred)
+    )
+  )
+)
 
-fit_pred_data <- data.frame(Time = 1:nrow(ARMAdata2),
-                          x = c(as.numeric(ARMAdata2_train$x) - as.numeric(resid(fit_train$fit)), 
-                                  as.numeric(fit_for$pred)),
-                          SE = c(rep(sqrt(fit_train$fit$sigma2), n_train), as.numeric(fit_for$se)))
+fit_pred_data <- data.frame(
+  Time = 1:nrow(ARMAdata2),
+  x = c(
+    as.numeric(ARMAdata2_train$x) - as.numeric(resid(fit_train$fit)),
+    as.numeric(fit_for$pred)
+  ),
+  SE = c(rep(sqrt(fit_train$fit$sigma2), n_train), as.numeric(fit_for$se))
+)
 
 # Create graph
-gg_fit <- ggplot(fit_data,
-                 aes(x = Time)) +
+gg_fit <- ggplot(
+  fit_data,
+  aes(x = Time)
+) +
   geom_line(aes(y = x, col = Type)) +
-  geom_ribbon(data = fit_pred_data,
-              aes(x = Time, 
-                  ymin = x - 1.96*SE,
-                  ymax = x + 1.96*SE),
-              alpha = .2) +
+  geom_ribbon(
+    data = fit_pred_data,
+    aes(
+      x = Time,
+      ymin = x - 1.96 * SE,
+      ymax = x + 1.96 * SE
+    ),
+    alpha = .2
+  ) +
   geom_vline(xintercept = n_train)
 
 gg_fit
-
-
 ```
 
 The predicted values after time point 150 follow the general shape of the true data; the prediction line rises and falls in tandem with the true data. However, the predicted values do not capture the magnitude of the true data, as the Given Data line rises to much greater heights and falls to much lower depths than the prediction ever does.
@@ -159,9 +174,8 @@ The top plot, with more erratic data, corresponds to $a_1$, while the bottom plo
 
 ### Part (b)
 ```{r Q2b, message=FALSE, warning=FALSE}
-
-a3_weights <- c(1,0,0,0,0,0,0,1,0,0,0,0,0,0,1)/3
-a4_weights <- c(1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1)/7
+a3_weights <- c(1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1) / 3
+a4_weights <- c(1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1, rep(0, 6), 1) / 7
 
 a3_smoothed_data <- accidents %>%
   mutate(ma = stats::filter(as.numeric(Freq), sides = 2, filter = a3_weights))
@@ -171,19 +185,18 @@ a4_smoothed_data <- accidents %>%
   mutate(ma = stats::filter(as.numeric(Freq), sides = 2, filter = a4_weights))
 
 ggplot() +
-  geom_point(data = accidents, aes(x = Date, y = Freq), size = 0.3, color = 'black') +
+  geom_point(data = accidents, aes(x = Date, y = Freq), size = 0.3, color = "black") +
   geom_line(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), linewidth = 0.3) +
-  geom_line(data = a3_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek, col=DayOfWeek), linewidth = 1) +
+  geom_line(data = a3_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek, col = DayOfWeek), linewidth = 1) +
   theme_bw() +
-  labs(title = 'Original Plot as Given in Homework')
+  labs(title = "Original Plot as Given in Homework")
 
 ggplot() +
-  geom_point(data = accidents, aes(x = Date, y = Freq), size = 0.3, color = 'black') +
+  geom_point(data = accidents, aes(x = Date, y = Freq), size = 0.3, color = "black") +
   geom_line(data = accidents, aes(x = Date, y = Freq, color = DayOfWeek), linewidth = 0.3) +
-  geom_line(data = a4_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek, col=DayOfWeek), linewidth = 1) +
+  geom_line(data = a4_smoothed_data, aes(x = Date, y = ma, color = DayOfWeek, col = DayOfWeek), linewidth = 1) +
   theme_bw() +
-  labs(title = 'New Plot Using Filter a4')
-
+  labs(title = "New Plot Using Filter a4")
 ```
 
 The moving averages in these two plots differ in smoothness because they use different weighting schemes to calculate their averages. Whereas the plot using filter $a_3$ assigns a weight of one-third to every seventh point, the plot using $a_4$ assigns a weight of one seventh to every seventh point. In this way, filter $a_4$ considers more data points in finding each average point, as it gives each data point a smaller weight in the calculation of the average.
